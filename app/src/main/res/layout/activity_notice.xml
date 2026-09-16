@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="#F6F7FC">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp" android:background="@drawable/bg_premium_header">
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Notices" android:textColor="#FFFFFF" android:textSize="27sp" android:textStyle="bold"/>
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Updates from your verified school" android:textColor="#E8E5FF"/>
+ </LinearLayout>
+ <ProgressBar android:id="@+id/noticeProgress" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:layout_marginTop="14dp"/>
+ <TextView android:id="@+id/noticeStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:padding="12dp" android:textColor="#667085"/>
+ <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+  <LinearLayout android:id="@+id/noticeList" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp"/>
+ </ScrollView>
+</LinearLayout>
