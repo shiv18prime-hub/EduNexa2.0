@@ -1,10 +1,17 @@
 <resources>
-    <style name="Theme.EduNexa" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.EduNexa" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">#3157D5</item>
         <item name="colorPrimaryVariant">#2443A8</item>
+        <item name="colorSecondary">#6547E8</item>
         <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">#17213D</item>
+        <item name="android:colorAccent">#3157D5</item>
         <item name="android:fontFamily">sans</item>
+        <item name="android:windowBackground">#F6F7FC</item>
         <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">#F6F7FC</item>
         <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>
