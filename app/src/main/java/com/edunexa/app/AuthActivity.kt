@@ -4,38 +4,98 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.edunexa.app.data.AuthRepository
+import com.edunexa.app.data.UserProfile
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 
 class AuthActivity : AppCompatActivity() {
     private val authRepository = AuthRepository()
     private val db = FirebaseFirestore.getInstance()
+    private val firebaseAuth = FirebaseAuth.getInstance()
     private var selectedRole = "student"
+
+    private lateinit var name: EditText
+    private lateinit var school: EditText
+    private lateinit var email: EditText
+    private lateinit var password: EditText
+    private lateinit var classInput: EditText
+    private lateinit var contact: EditText
+    private lateinit var address: EditText
+    private lateinit var status: TextView
+    private lateinit var progress: ProgressBar
+
+    private val googleLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        try {
+            val account = task.result
+            val credential = GoogleAuthProvider.getCredential(account.idToken, null)
+            progress.visibility = View.VISIBLE
+            firebaseAuth.signInWithCredential(credential).addOnSuccessListener { authResult ->
+                val user = authResult.user ?: return@addOnSuccessListener
+                val isSchool = selectedRole == "school"
+                val profile = UserProfile(
+                    uid = user.uid,
+                    name = if (isSchool) school.text.toString().trim() else (name.text.toString().trim().ifBlank { user.displayName ?: "Student" }),
+                    email = user.email ?: "",
+                    role = selectedRole,
+                    schoolName = if (isSchool) school.text.toString().trim() else "",
+                    className = if (isSchool) "" else classInput.text.toString().trim(),
+                    contactNumber = if (isSchool) contact.text.toString().trim() else "",
+                    address = if (isSchool) address.text.toString().trim() else "",
+                    schoolApproved = !isSchool
+                )
+                db.collection("users").document(user.uid).set(profile).addOnSuccessListener {
+                    routeCurrentUser(status, progress)
+                }.addOnFailureListener {
+                    progress.visibility = View.GONE
+                    status.text = it.message ?: "Could not save profile"
+                }
+            }.addOnFailureListener {
+                progress.visibility = View.GONE
+                status.text = it.message ?: "Google sign-in failed"
+            }
+        } catch (e: Exception) {
+            progress.visibility = View.GONE
+            status.text = e.message ?: "Google sign-in cancelled"
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_auth)
         val welcome=findViewById<LinearLayout>(R.id.welcomePanel); val form=findViewById<LinearLayout>(R.id.formPanel)
         val header=findViewById<ImageView>(R.id.formHeaderImage); val title=findViewById<TextView>(R.id.formTitle); val subtitle=findViewById<TextView>(R.id.formSubtitle)
-        val name=findViewById<EditText>(R.id.nameInput); val school=findViewById<EditText>(R.id.schoolInput); val email=findViewById<EditText>(R.id.emailInput); val password=findViewById<EditText>(R.id.passwordInput)
-        val classInput=findViewById<EditText>(R.id.classInput); val contact=findViewById<EditText>(R.id.contactInput); val address=findViewById<EditText>(R.id.addressInput)
+        name=findViewById(R.id.nameInput); school=findViewById(R.id.schoolInput); email=findViewById(R.id.emailInput); password=findViewById(R.id.passwordInput)
+        classInput=findViewById(R.id.classInput); contact=findViewById(R.id.contactInput); address=findViewById(R.id.addressInput)
         val register=findViewById<TextView>(R.id.registerBtn); val login=findViewById<TextView>(R.id.loginBtn); val approval=findViewById<TextView>(R.id.approvalInfo)
-        val status=findViewById<TextView>(R.id.statusText); val progress=findViewById<ProgressBar>(R.id.progress)
+        val social=findViewById<LinearLayout>(R.id.socialOptions); status=findViewById(R.id.statusText); progress=findViewById(R.id.progress)
 
         fun reset(){ listOf(name,school,email,password,classInput,contact,address).forEach{it.text.clear()}; status.text="" }
-        fun signup(role:String){ reset(); selectedRole=role; welcome.visibility=View.GONE; form.visibility=View.VISIBLE; register.visibility=View.VISIBLE; login.visibility=View.GONE
+        fun signup(role:String){ reset(); selectedRole=role; welcome.visibility=View.GONE; form.visibility=View.VISIBLE; register.visibility=View.VISIBLE; login.visibility=View.GONE; social.visibility=View.VISIBLE
             val isSchool=role=="school"; header.setImageResource(if(isSchool) R.drawable.school_art else R.drawable.student_art)
             title.text=if(isSchool) "Create School Account" else "Create Student Account"; subtitle.text=if(isSchool) "Register your school to manage students and academic activities" else "Start your learning journey with EduNexa"
             name.visibility=if(isSchool) View.GONE else View.VISIBLE; school.visibility=if(isSchool) View.VISIBLE else View.GONE; classInput.visibility=if(isSchool) View.GONE else View.VISIBLE
             contact.visibility=if(isSchool) View.VISIBLE else View.GONE; address.visibility=if(isSchool) View.VISIBLE else View.GONE; approval.visibility=if(isSchool) View.VISIBLE else View.GONE }
         fun showLogin(){ reset(); welcome.visibility=View.GONE; form.visibility=View.VISIBLE; header.setImageResource(R.drawable.edunexa_logo); title.text="Welcome Back"; subtitle.text="Login with your EduNexa email account"
-            listOf(name,school,classInput,contact,address,register,approval).forEach{it.visibility=View.GONE}; login.visibility=View.VISIBLE }
+            listOf(name,school,classInput,contact,address,register,approval,social).forEach{it.visibility=View.GONE}; login.visibility=View.VISIBLE }
         fun showWelcome(){ reset(); progress.visibility=View.GONE; form.visibility=View.GONE; welcome.visibility=View.VISIBLE }
 
         findViewById<View>(R.id.studentChoiceBtn).setOnClickListener{signup("student")}; findViewById<View>(R.id.schoolChoiceBtn).setOnClickListener{signup("school")}
         findViewById<View>(R.id.showLoginBtn).setOnClickListener{showLogin()}; findViewById<View>(R.id.loginLink).setOnClickListener{showLogin()}; findViewById<View>(R.id.backBtn).setOnClickListener{showWelcome()}
+        findViewById<View>(R.id.emailContinueBtn).setOnClickListener { email.requestFocus() }
+        findViewById<View>(R.id.googleBtn).setOnClickListener {
+            val isSchool=selectedRole=="school"
+            val extraOk=if(isSchool) school.text.isNotBlank()&&contact.text.isNotBlank()&&address.text.isNotBlank() else classInput.text.isNotBlank()
+            if(!extraOk){ status.text=if(isSchool) "Enter school name, contact number and address first" else "Enter your class first"; return@setOnClickListener }
+            val options=GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build()
+            googleLauncher.launch(GoogleSignIn.getClient(this,options).signInIntent)
+        }
 
         register.setOnClickListener{
             val isSchool=selectedRole=="school"
