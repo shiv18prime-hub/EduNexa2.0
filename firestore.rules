@@ -2,9 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function isAdmin() {
-      return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
+    function userData() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function isAdmin() { return signedIn() && userData().role == 'admin'; }
+    function isApprovedSchool() { return signedIn() && userData().role == 'school' && userData().schoolApproved == true; }
 
     match /users/{userId} {
       allow create: if signedIn() && request.auth.uid == userId && request.resource.data.role in ['student', 'school'];
@@ -15,6 +15,12 @@ service cloud.firestore {
     match /results/{resultId} {
       allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
       allow read, update, delete: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /notices/{noticeId} {
+      allow create: if isApprovedSchool() && request.resource.data.schoolId == request.auth.uid;
+      allow read: if signedIn() && (isAdmin() || (userData().role == 'student' && userData().schoolId == resource.data.schoolId) || (isApprovedSchool() && request.auth.uid == resource.data.schoolId));
+      allow update, delete: if isAdmin() || (isApprovedSchool() && request.auth.uid == resource.data.schoolId);
     }
 
     match /coupons/{couponId} {
