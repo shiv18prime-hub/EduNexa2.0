@@ -11,26 +11,26 @@ service cloud.firestore {
       allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
       allow update: if signedIn() && ((request.auth.uid == userId && request.resource.data.role == resource.data.role && request.resource.data.schoolApproved == resource.data.schoolApproved) || isAdmin());
     }
-
     match /results/{resultId} {
       allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
       allow read, update, delete: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
     }
-
     match /notices/{noticeId} {
       allow create: if isApprovedSchool() && request.resource.data.schoolId == request.auth.uid;
       allow read: if signedIn() && (isAdmin() || (userData().role == 'student' && userData().schoolId == resource.data.schoolId) || (isApprovedSchool() && request.auth.uid == resource.data.schoolId));
       allow update, delete: if isAdmin() || (isApprovedSchool() && request.auth.uid == resource.data.schoolId);
     }
-
-    match /coupons/{couponId} {
-      allow read: if signedIn();
-      allow create, update, delete: if isAdmin();
+    match /mcqTests/{testId} {
+      allow create: if isApprovedSchool() && request.resource.data.schoolId == request.auth.uid;
+      allow read: if signedIn() && (isAdmin() || (userData().role == 'student' && userData().schoolId == resource.data.schoolId) || (isApprovedSchool() && request.auth.uid == resource.data.schoolId));
+      allow update, delete: if isAdmin() || (isApprovedSchool() && request.auth.uid == resource.data.schoolId);
     }
-
-    match /schoolCodes/{code} {
-      allow read: if signedIn();
-      allow create, update, delete: if isAdmin();
+    match /mcqAttempts/{attemptId} {
+      allow create: if signedIn() && userData().role == 'student' && request.resource.data.studentId == request.auth.uid;
+      allow read: if signedIn() && (resource.data.studentId == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin();
     }
+    match /coupons/{couponId} { allow read: if signedIn(); allow create, update, delete: if isAdmin(); }
+    match /schoolCodes/{code} { allow read: if signedIn(); allow create, update, delete: if isAdmin(); }
   }
 }
