@@ -1,102 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:fillViewport="true" android:background="@drawable/bg_auth_gradient">
- <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-     android:minHeight="720dp" android:orientation="vertical" android:gravity="center_horizontal" android:padding="22dp">
-
-  <ImageView android:id="@+id/brandLogo" android:layout_width="145dp" android:layout_height="145dp"
-      android:layout_marginTop="24dp" android:src="@drawable/edunexa_logo" android:scaleType="centerInside"
-      android:contentDescription="EduNexa logo"/>
-  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="EduNexa"
-      android:textColor="#FFFFFF" android:textSize="32sp" android:textStyle="bold"/>
-  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp"
-      android:text="Learn • Calculate • Create • Connect • Grow" android:textColor="#EEEAFE" android:textSize="12sp"/>
-
-  <LinearLayout android:id="@+id/welcomePanel" android:layout_width="match_parent" android:layout_height="wrap_content"
-      android:layout_marginTop="24dp" android:orientation="vertical">
-   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center"
-       android:text="Welcome to EduNexa" android:textColor="#FFFFFF" android:textSize="26sp" android:textStyle="bold"/>
-   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp"
-       android:layout_marginBottom="18dp" android:gravity="center" android:text="Choose how you want to continue"
-       android:textColor="#EEEAFE" android:textSize="14sp"/>
-
-   <LinearLayout android:id="@+id/studentChoiceBtn" android:layout_width="match_parent" android:layout_height="100dp"
-       android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp" android:clickable="true"
-       android:focusable="true" android:elevation="5dp" android:background="@drawable/bg_auth_card">
-    <ImageView android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/student_art"
-        android:scaleType="centerCrop" android:contentDescription="Student"/>
-    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-        android:orientation="vertical" android:paddingStart="14dp">
-     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="I’m a Student"
-         android:textColor="#17213D" android:textSize="18sp" android:textStyle="bold"/>
-     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp"
-         android:text="Learn, Calculate, Explore &amp; Grow" android:textColor="#72798F" android:textSize="13sp"/>
-    </LinearLayout>
-    <TextView android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:text="›"
-        android:textColor="#3157D5" android:textSize="30sp" android:textStyle="bold"/>
-   </LinearLayout>
-
-   <LinearLayout android:id="@+id/schoolChoiceBtn" android:layout_width="match_parent" android:layout_height="100dp"
-       android:layout_marginTop="12dp" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp"
-       android:clickable="true" android:focusable="true" android:elevation="5dp" android:background="@drawable/bg_auth_card">
-    <ImageView android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/school_art"
-        android:scaleType="centerCrop" android:contentDescription="School"/>
-    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-        android:orientation="vertical" android:paddingStart="14dp">
-     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="I’m a School"
-         android:textColor="#17213D" android:textSize="18sp" android:textStyle="bold"/>
-     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp"
-         android:text="Manage Students, Track Results &amp; More" android:textColor="#72798F" android:textSize="13sp"/>
-    </LinearLayout>
-    <TextView android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:text="›"
-        android:textColor="#3157D5" android:textSize="30sp" android:textStyle="bold"/>
-   </LinearLayout>
-
-   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp"
-       android:gravity="center" android:text="Already have an account?" android:textColor="#EEEAFE" android:textSize="13sp"/>
-   <TextView android:id="@+id/showLoginBtn" android:layout_width="match_parent" android:layout_height="54dp"
-       android:layout_marginTop="7dp" android:gravity="center" android:text="Login to EduNexa" android:textColor="#3157D5"
-       android:textSize="16sp" android:textStyle="bold" android:clickable="true" android:focusable="true"
-       android:background="@drawable/bg_auth_card"/>
-   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp"
-       android:gravity="center" android:text="Education for a Brighter Tomorrow" android:textColor="#EEEAFE" android:textSize="12sp"/>
-  </LinearLayout>
-
-  <LinearLayout android:id="@+id/formPanel" android:layout_width="match_parent" android:layout_height="wrap_content"
-      android:layout_marginTop="20dp" android:orientation="vertical" android:padding="22dp" android:elevation="8dp"
-      android:background="@drawable/bg_auth_card" android:visibility="gone">
-   <ImageView android:id="@+id/formHeaderImage" android:layout_width="100dp" android:layout_height="100dp"
-       android:layout_gravity="center_horizontal" android:scaleType="centerCrop" android:contentDescription="Account type"/>
-   <TextView android:id="@+id/formTitle" android:layout_width="match_parent" android:layout_height="wrap_content"
-       android:layout_marginTop="10dp" android:gravity="center" android:text="Create Student Account" android:textColor="#17213D"
-       android:textSize="24sp" android:textStyle="bold"/>
-   <TextView android:id="@+id/formSubtitle" android:layout_width="match_parent" android:layout_height="wrap_content"
-       android:layout_marginTop="5dp" android:layout_marginBottom="18dp" android:gravity="center" android:textColor="#72798F" android:textSize="13sp"/>
-   <EditText android:id="@+id/nameInput" android:layout_width="match_parent" android:layout_height="56dp" android:hint="Full name"
-       android:singleLine="true" android:textColor="#17213D" android:textColorHint="#9096A8" android:background="@drawable/bg_auth_input"/>
-   <EditText android:id="@+id/emailInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="12dp"
-       android:hint="Email address" android:inputType="textEmailAddress" android:singleLine="true" android:textColor="#17213D"
-       android:textColorHint="#9096A8" android:background="@drawable/bg_auth_input"/>
-   <EditText android:id="@+id/passwordInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="12dp"
-       android:hint="Password (minimum 6 characters)" android:inputType="textPassword" android:singleLine="true" android:textColor="#17213D"
-       android:textColorHint="#9096A8" android:background="@drawable/bg_auth_input"/>
-   <EditText android:id="@+id/schoolInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="12dp"
-       android:hint="School name" android:singleLine="true" android:textColor="#17213D" android:textColorHint="#9096A8"
-       android:background="@drawable/bg_auth_input" android:visibility="gone"/>
-   <Spinner android:id="@+id/roleSpinner" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone"/>
-   <TextView android:id="@+id/registerBtn" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="20dp"
-       android:gravity="center" android:text="Create Account" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold"
-       android:clickable="true" android:focusable="true" android:background="@drawable/bg_auth_button"/>
-   <TextView android:id="@+id/loginBtn" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="20dp"
-       android:gravity="center" android:text="Login" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold"
-       android:clickable="true" android:focusable="true" android:background="@drawable/bg_auth_button" android:visibility="gone"/>
-   <TextView android:id="@+id/backBtn" android:layout_width="match_parent" android:layout_height="50dp" android:layout_marginTop="10dp"
-       android:gravity="center" android:text="← Back" android:textColor="#3157D5" android:textSize="15sp" android:clickable="true" android:focusable="true"/>
-   <ProgressBar android:id="@+id/progress" android:layout_width="wrap_content" android:layout_height="wrap_content"
-       android:layout_gravity="center" android:layout_marginTop="10dp" android:visibility="gone"/>
-   <TextView android:id="@+id/statusText" android:layout_width="match_parent" android:layout_height="wrap_content"
-       android:gravity="center" android:paddingTop="10dp" android:textColor="#D23B4A" android:textSize="13sp"/>
-  </LinearLayout>
- </LinearLayout>
-</ScrollView>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:background="@drawable/bg_auth_gradient">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="720dp" android:orientation="vertical" android:gravity="center_horizontal" android:padding="22dp">
+<ImageView android:id="@+id/brandLogo" android:layout_width="125dp" android:layout_height="125dp" android:layout_marginTop="18dp" android:src="@drawable/edunexa_logo" android:scaleType="centerInside" android:contentDescription="EduNexa logo"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="EduNexa" android:textColor="#FFFFFF" android:textSize="30sp" android:textStyle="bold"/>
+<TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:text="Learn • Calculate • Create • Connect • Grow" android:textColor="#EEEAFE" android:textSize="12sp"/>
+<LinearLayout android:id="@+id/welcomePanel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="22dp" android:orientation="vertical">
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="Welcome to EduNexa" android:textColor="#FFFFFF" android:textSize="25sp" android:textStyle="bold"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:layout_marginBottom="18dp" android:gravity="center" android:text="Choose how you want to continue" android:textColor="#EEEAFE" android:textSize="14sp"/>
+<LinearLayout android:id="@+id/studentChoiceBtn" android:layout_width="match_parent" android:layout_height="100dp" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp" android:clickable="true" android:focusable="true" android:elevation="5dp" android:background="@drawable/bg_auth_card"><ImageView android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/student_art" android:scaleType="centerCrop" android:contentDescription="Student"/><LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:paddingStart="14dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="I’m a Student" android:textColor="#17213D" android:textSize="18sp" android:textStyle="bold"/><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Learn, Calculate, Explore &amp; Grow" android:textColor="#72798F" android:textSize="13sp"/></LinearLayout><TextView android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:text="›" android:textColor="#3157D5" android:textSize="30sp"/></LinearLayout>
+<LinearLayout android:id="@+id/schoolChoiceBtn" android:layout_width="match_parent" android:layout_height="100dp" android:layout_marginTop="12dp" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp" android:clickable="true" android:focusable="true" android:elevation="5dp" android:background="@drawable/bg_auth_card"><ImageView android:layout_width="76dp" android:layout_height="76dp" android:src="@drawable/school_art" android:scaleType="centerCrop" android:contentDescription="School"/><LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:paddingStart="14dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="I’m a School" android:textColor="#17213D" android:textSize="18sp" android:textStyle="bold"/><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Manage Students, Track Results &amp; More" android:textColor="#72798F" android:textSize="13sp"/></LinearLayout><TextView android:layout_width="42dp" android:layout_height="42dp" android:gravity="center" android:text="›" android:textColor="#3157D5" android:textSize="30sp"/></LinearLayout>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="20dp" android:gravity="center" android:text="Already have an account?" android:textColor="#EEEAFE"/><TextView android:id="@+id/showLoginBtn" android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="7dp" android:gravity="center" android:text="Login to EduNexa" android:textColor="#3157D5" android:textSize="16sp" android:textStyle="bold" android:clickable="true" android:focusable="true" android:background="@drawable/bg_auth_card"/>
+</LinearLayout>
+<LinearLayout android:id="@+id/formPanel" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:orientation="vertical" android:padding="22dp" android:elevation="8dp" android:background="@drawable/bg_auth_card" android:visibility="gone">
+<ImageView android:id="@+id/formHeaderImage" android:layout_width="100dp" android:layout_height="100dp" android:layout_gravity="center_horizontal" android:scaleType="centerCrop" android:contentDescription="Account type"/>
+<TextView android:id="@+id/formTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center" android:textColor="#17213D" android:textSize="24sp" android:textStyle="bold"/>
+<TextView android:id="@+id/formSubtitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:layout_marginBottom="16dp" android:gravity="center" android:textColor="#72798F" android:textSize="13sp"/>
+<EditText android:id="@+id/nameInput" android:layout_width="match_parent" android:layout_height="56dp" android:hint="Full name" android:singleLine="true" android:textColor="#17213D" android:textColorHint="#9096A8" android:background="@drawable/bg_auth_input"/>
+<EditText android:id="@+id/schoolInput" android:layout_width="match_parent" android:layout_height="56dp" android:hint="School name" android:singleLine="true" android:textColor="#17213D" android:textColorHint="#9096A8" android:background="@drawable/bg_auth_input" android:visibility="gone"/>
+<EditText android:id="@+id/emailInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="11dp" android:hint="Email address" android:inputType="textEmailAddress" android:singleLine="true" android:textColor="#17213D" android:textColorHint="#9096A8" android:background="@drawable/bg_auth_input"/>
+<EditText android:id="@+id/passwordInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="11dp" android:hint="Password" android:inputType="textPassword" android:singleLine="true" android:textColor="#17213D" android:textColorHint="#9096A8" android:background="@drawable/bg_auth_input"/>
+<EditText android:id="@+id/classInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="11dp" android:hint="Class (e.g. 10th, 12th, BCA)" android:singleLine="true" android:textColor="#17213D" android:textColorHint="#9096A8" android:background="@drawable/bg_auth_input"/>
+<EditText android:id="@+id/contactInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="11dp" android:hint="Contact number" android:inputType="phone" android:singleLine="true" android:textColor="#17213D" android:textColorHint="#9096A8" android:background="@drawable/bg_auth_input" android:visibility="gone"/>
+<EditText android:id="@+id/addressInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="11dp" android:hint="Address" android:singleLine="true" android:textColor="#17213D" android:textColorHint="#9096A8" android:background="@drawable/bg_auth_input" android:visibility="gone"/>
+<TextView android:id="@+id/registerBtn" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="18dp" android:gravity="center" android:text="Create Account" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" android:clickable="true" android:focusable="true" android:background="@drawable/bg_auth_button"/>
+<TextView android:id="@+id/loginBtn" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="18dp" android:gravity="center" android:text="Login" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" android:clickable="true" android:focusable="true" android:background="@drawable/bg_auth_button" android:visibility="gone"/>
+<TextView android:id="@+id/approvalInfo" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp" android:padding="12dp" android:gravity="center" android:text="Your school account will be reviewed and activated by our team." android:textColor="#6547E8" android:textSize="13sp" android:visibility="gone"/>
+<TextView android:id="@+id/loginLink" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="8dp" android:gravity="center" android:text="Already have an account?  Login" android:textColor="#3157D5" android:textSize="14sp" android:clickable="true" android:focusable="true"/>
+<TextView android:id="@+id/backBtn" android:layout_width="match_parent" android:layout_height="46dp" android:gravity="center" android:text="← Back" android:textColor="#3157D5" android:textSize="15sp" android:clickable="true" android:focusable="true"/>
+<ProgressBar android:id="@+id/progress" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:visibility="gone"/><TextView android:id="@+id/statusText" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:paddingTop="8dp" android:textColor="#D23B4A"/>
+</LinearLayout>
+</LinearLayout></ScrollView>
