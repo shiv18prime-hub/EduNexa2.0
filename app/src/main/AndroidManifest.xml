@@ -5,13 +5,11 @@
         <activity android:name=".AdminActivity" android:exported="false" />
         <activity android:name=".SchoolActivity" android:exported="false" />
         <activity android:name=".JoinSchoolActivity" android:exported="false" />
+        <activity android:name=".NoticeActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="false" />
         <activity android:name=".PendingApprovalActivity" android:exported="false" />
         <activity android:name=".AuthActivity" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
     </application>
 </manifest>
