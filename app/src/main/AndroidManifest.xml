@@ -6,6 +6,7 @@
         <activity android:name=".ToolsActivity" android:exported="false"/>
         <activity android:name=".ImageMergeActivity" android:exported="false"/>
         <activity android:name=".MarksheetMakerActivity" android:exported="false"/>
+        <activity android:name=".VerifyMarksheetActivity" android:exported="false"/>
         <activity android:name=".PhotoSignatureToolActivity" android:exported="false"/>
         <activity android:name=".TargetKbToolActivity" android:exported="false"/>
         <activity android:name=".PdfToolkitActivity" android:exported="false"/>
