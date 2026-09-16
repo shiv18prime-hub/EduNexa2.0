@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <application android:allowBackup="true" android:label="EduNexa" android:theme="@style/Theme.EduNexa">
+        <activity android:name=".AdminActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="false" />
         <activity android:name=".PendingApprovalActivity" android:exported="false" />
         <activity android:name=".AuthActivity" android:exported="true">
