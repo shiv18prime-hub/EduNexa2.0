@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
-    <application
-        android:allowBackup="true"
-        android:label="EduNexa"
-        android:icon="@drawable/edunexa_logo"
-        android:roundIcon="@drawable/edunexa_logo"
-        android:theme="@style/Theme.EduNexa">
+    <application android:allowBackup="true" android:label="EduNexa" android:icon="@drawable/edunexa_logo" android:roundIcon="@drawable/edunexa_logo" android:theme="@style/Theme.EduNexa">
         <activity android:name=".ResultCalculatorActivity" android:exported="false"/>
         <activity android:name=".ToolsActivity" android:exported="false"/>
         <activity android:name=".ImageMergeActivity" android:exported="false"/>
+        <activity android:name=".MarksheetMakerActivity" android:exported="false"/>
         <activity android:name=".PhotoSignatureToolActivity" android:exported="false"/>
         <activity android:name=".TargetKbToolActivity" android:exported="false"/>
         <activity android:name=".PdfToolkitActivity" android:exported="false"/>
@@ -28,11 +24,6 @@
         <activity android:name=".NoticeActivity" android:exported="false"/>
         <activity android:name=".MainActivity" android:exported="false"/>
         <activity android:name=".PendingApprovalActivity" android:exported="false"/>
-        <activity android:name=".AuthActivity" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
+        <activity android:name=".AuthActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
     </application>
 </manifest>
