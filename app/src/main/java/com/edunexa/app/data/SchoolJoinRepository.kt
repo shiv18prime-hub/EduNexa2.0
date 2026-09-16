@@ -7,6 +7,8 @@ class SchoolJoinRepository {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
+    fun joinByCode(code: String, onResult: (Boolean, String) -> Unit) = joinSchool(code, onResult)
+
     fun joinSchool(code: String, onResult: (Boolean, String) -> Unit) {
         val uid = auth.currentUser?.uid ?: return onResult(false, "Please login first")
         val normalized = code.trim().uppercase()
@@ -15,9 +17,20 @@ class SchoolJoinRepository {
             .addOnSuccessListener { doc ->
                 if (!doc.exists() || doc.getBoolean("active") != true) return@addOnSuccessListener onResult(false, "Invalid school code")
                 val schoolId = doc.getString("schoolId") ?: return@addOnSuccessListener onResult(false, "Invalid school record")
-                db.collection("users").document(uid).update("schoolId", schoolId, "schoolCode", normalized)
-                    .addOnSuccessListener { onResult(true, "Connected to verified school") }
-                    .addOnFailureListener { onResult(false, it.message ?: "Could not join school") }
+                db.collection("users").document(schoolId).get().addOnSuccessListener { school ->
+                    if (school.getString("role") != "school" || school.getBoolean("schoolApproved") != true)
+                        return@addOnSuccessListener onResult(false, "School is not verified")
+                    db.collection("users").document(uid).get().addOnSuccessListener { user ->
+                        if (user.getString("role") != "student") return@addOnSuccessListener onResult(false, "Only student accounts can join a school")
+                        db.collection("users").document(uid).update(
+                            "schoolId", schoolId,
+                            "schoolCode", normalized,
+                            "schoolJoinStatus", "connected",
+                            "schoolJoinedAt", System.currentTimeMillis()
+                        ).addOnSuccessListener { onResult(true, "Connected to verified school") }
+                         .addOnFailureListener { onResult(false, it.message ?: "Could not join school") }
+                    }.addOnFailureListener { onResult(false, it.message ?: "Could not verify student") }
+                }.addOnFailureListener { onResult(false, it.message ?: "Could not verify school") }
             }
             .addOnFailureListener { onResult(false, it.message ?: "Could not verify school code") }
     }
