@@ -1,13 +1,29 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow read, update: if request.auth != null && request.auth.uid == userId;
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
+
+    match /users/{userId} {
+      allow create: if signedIn() && request.auth.uid == userId && request.resource.data.role in ['student', 'school'];
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow update: if signedIn() && (
+        (request.auth.uid == userId && request.resource.data.role == resource.data.role && request.resource.data.schoolApproved == resource.data.schoolApproved) ||
+        isAdmin()
+      );
+    }
+
     match /results/{resultId} {
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /coupons/{couponId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
     }
   }
 }
