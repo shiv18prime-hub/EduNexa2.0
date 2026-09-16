@@ -3,18 +3,33 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F7FC">
+    android:background="#F6F7FC">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp"
-        android:background="#3157D5">
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="EduNexa" android:textColor="#FFFFFF" android:textSize="28sp" android:textStyle="bold" />
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Learn • Calculate • Connect" android:textColor="#DCE4FF" android:textSize="14sp" />
+        android:paddingStart="22dp"
+        android:paddingEnd="22dp"
+        android:paddingTop="28dp"
+        android:paddingBottom="22dp"
+        android:background="@drawable/bg_premium_header">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="EduNexa 2.0"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Learn • Calculate • Create • Connect • Grow"
+            android:textColor="#E8E5FF"
+            android:textSize="13sp" />
     </LinearLayout>
 
     <FrameLayout
@@ -26,13 +41,17 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_height="76dp"
         android:orientation="horizontal"
         android:gravity="center"
-        android:background="#FFFFFF">
-        <Button android:id="@+id/homeBtn" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Home" />
-        <Button android:id="@+id/toolsBtn" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Tools" />
-        <Button android:id="@+id/connectBtn" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Connect" />
-        <Button android:id="@+id/profileBtn" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Profile" />
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:background="#FFFFFF"
+        android:elevation="12dp">
+
+        <Button android:id="@+id/homeBtn" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Home" android:textAllCaps="false" android:backgroundTint="#EEF0FF" android:textColor="#4338CA" />
+        <Button android:id="@+id/toolsBtn" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Tools" android:textAllCaps="false" android:backgroundTint="#FFFFFF" android:textColor="#596174" />
+        <Button android:id="@+id/connectBtn" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Connect" android:textAllCaps="false" android:backgroundTint="#FFFFFF" android:textColor="#596174" />
+        <Button android:id="@+id/profileBtn" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Profile" android:textAllCaps="false" android:backgroundTint="#FFFFFF" android:textColor="#596174" />
     </LinearLayout>
 </LinearLayout>
