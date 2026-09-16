@@ -13,6 +13,9 @@ class AuthRepository {
         password: String,
         role: String,
         schoolName: String = "",
+        className: String = "",
+        contactNumber: String = "",
+        address: String = "",
         onResult: (Boolean, String) -> Unit
     ) {
         auth.createUserWithEmailAndPassword(email, password)
@@ -24,6 +27,9 @@ class AuthRepository {
                     email = email,
                     role = role,
                     schoolName = schoolName,
+                    className = className,
+                    contactNumber = contactNumber,
+                    address = address,
                     schoolApproved = role != "school"
                 )
                 db.collection("users").document(uid).set(profile)
