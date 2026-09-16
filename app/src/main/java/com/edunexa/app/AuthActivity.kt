@@ -20,6 +20,7 @@ class AuthActivity : AppCompatActivity() {
 
         val welcome = findViewById<LinearLayout>(R.id.welcomePanel)
         val form = findViewById<LinearLayout>(R.id.formPanel)
+        val headerImage = findViewById<ImageView>(R.id.formHeaderImage)
         val title = findViewById<TextView>(R.id.formTitle)
         val subtitle = findViewById<TextView>(R.id.formSubtitle)
         val name = findViewById<EditText>(R.id.nameInput)
@@ -27,8 +28,8 @@ class AuthActivity : AppCompatActivity() {
         val password = findViewById<EditText>(R.id.passwordInput)
         val school = findViewById<EditText>(R.id.schoolInput)
         val role = findViewById<Spinner>(R.id.roleSpinner)
-        val register = findViewById<Button>(R.id.registerBtn)
-        val login = findViewById<Button>(R.id.loginBtn)
+        val register = findViewById<TextView>(R.id.registerBtn)
+        val login = findViewById<TextView>(R.id.loginBtn)
         val status = findViewById<TextView>(R.id.statusText)
         val progress = findViewById<ProgressBar>(R.id.progress)
         role.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, listOf("Student", "School"))
@@ -36,29 +37,34 @@ class AuthActivity : AppCompatActivity() {
         fun resetFields() {
             name.text.clear(); email.text.clear(); password.text.clear(); school.text.clear(); status.text = ""
         }
+
         fun showSignup(roleName: String) {
             resetFields(); selectedRole = roleName
             welcome.visibility = View.GONE; form.visibility = View.VISIBLE
             name.visibility = View.VISIBLE; register.visibility = View.VISIBLE; login.visibility = View.GONE
             school.visibility = if (roleName == "school") View.VISIBLE else View.GONE
             role.setSelection(if (roleName == "school") 1 else 0)
+            headerImage.setImageResource(if (roleName == "school") R.drawable.school_art else R.drawable.student_art)
             title.text = if (roleName == "school") "Create School Account" else "Create Student Account"
-            subtitle.text = if (roleName == "school") "Register your school • Admin approval required" else "Learn • Calculate • Connect • Grow"
+            subtitle.text = if (roleName == "school") "Register your school to manage students and academic activities" else "Start your learning journey with EduNexa"
         }
+
         fun showLogin() {
             resetFields(); welcome.visibility = View.GONE; form.visibility = View.VISIBLE
             name.visibility = View.GONE; school.visibility = View.GONE; register.visibility = View.GONE; login.visibility = View.VISIBLE
+            headerImage.setImageResource(R.drawable.edunexa_logo)
             title.text = "Welcome Back"
             subtitle.text = "Login with your EduNexa email account"
         }
+
         fun showWelcome() {
             resetFields(); progress.visibility = View.GONE; form.visibility = View.GONE; welcome.visibility = View.VISIBLE
         }
 
-        findViewById<Button>(R.id.studentChoiceBtn).setOnClickListener { showSignup("student") }
-        findViewById<Button>(R.id.schoolChoiceBtn).setOnClickListener { showSignup("school") }
-        findViewById<Button>(R.id.showLoginBtn).setOnClickListener { showLogin() }
-        findViewById<Button>(R.id.backBtn).setOnClickListener { showWelcome() }
+        findViewById<View>(R.id.studentChoiceBtn).setOnClickListener { showSignup("student") }
+        findViewById<View>(R.id.schoolChoiceBtn).setOnClickListener { showSignup("school") }
+        findViewById<View>(R.id.showLoginBtn).setOnClickListener { showLogin() }
+        findViewById<View>(R.id.backBtn).setOnClickListener { showWelcome() }
 
         register.setOnClickListener {
             if (name.text.isBlank() || email.text.isBlank() || password.text.length < 6 || (selectedRole == "school" && school.text.isBlank())) {
