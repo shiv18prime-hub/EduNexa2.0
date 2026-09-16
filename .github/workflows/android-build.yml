@@ -15,6 +15,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Print debug signing fingerprints
+        run: gradle signingReport
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
