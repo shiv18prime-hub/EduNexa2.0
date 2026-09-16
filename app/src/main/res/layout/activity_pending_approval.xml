@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="center" android:padding="32dp" android:background="#F5F7FC">
+ <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="School Verification" android:textSize="28sp" android:textStyle="bold" android:textColor="#18213D" />
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Your school registration has been received. EduNexa school services will unlock after admin approval. You can still use general student tools." android:textSize="17sp" android:gravity="center" android:padding="20dp" />
+ <Button android:id="@+id/continueBtn" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Continue to General Tools" />
+</LinearLayout>
