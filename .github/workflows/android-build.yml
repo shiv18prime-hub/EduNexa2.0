@@ -15,6 +15,25 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Restore stable debug keystore
+        uses: actions/cache@v4
+        with:
+          path: ~/.config/.android/debug.keystore
+          key: edunexa-debug-keystore-v1
+      - name: Create debug keystore if missing
+        run: |
+          mkdir -p ~/.config/.android
+          if [ ! -f ~/.config/.android/debug.keystore ]; then
+            keytool -genkeypair -v \
+              -keystore ~/.config/.android/debug.keystore \
+              -storepass android \
+              -alias AndroidDebugKey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=EduNexa,C=IN"
+          fi
       - name: Print debug signing fingerprints
         run: gradle signingReport
       - name: Build debug APK
