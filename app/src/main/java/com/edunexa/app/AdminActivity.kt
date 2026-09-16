@@ -1,68 +1,17 @@
 package com.edunexa.app
-
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.edunexa.app.data.AdminRepository
-import com.edunexa.app.data.UserProfile
+import com.edunexa.app.data.*
 import com.google.android.material.card.MaterialCardView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-
-class AdminActivity : AppCompatActivity() {
-    private val repo = AdminRepository()
-    private lateinit var list: LinearLayout
-    private lateinit var status: TextView
-    private lateinit var progress: ProgressBar
-    private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState); setContentView(R.layout.activity_admin)
-        list=findViewById(R.id.schoolList); status=findViewById(R.id.adminStatus); progress=findViewById(R.id.adminProgress)
-        findViewById<Button>(R.id.pendingTab).setOnClickListener { loadSchools() }
-        findViewById<Button>(R.id.usersTab).setOnClickListener { showInfo("User Management", "Student and school account controls") }
-        findViewById<Button>(R.id.couponsTab).setOnClickListener { showInfo("Coupon Management", "Create and manage Pro discount codes") }
-        findViewById<Button>(R.id.proTab).setOnClickListener { showInfo("EduNexa Pro", "Subscriptions and Pro access controls") }
-        verifyAdmin()
-    }
-
-    private fun verifyAdmin() {
-        progress.visibility=View.VISIBLE
-        val uid=FirebaseAuth.getInstance().currentUser?.uid ?: return finish()
-        FirebaseFirestore.getInstance().collection("users").document(uid).get().addOnSuccessListener { doc ->
-            if(doc.getString("role")!="admin") { Toast.makeText(this,"Admin access required",Toast.LENGTH_LONG).show(); finish() }
-            else loadSchools()
-        }.addOnFailureListener { Toast.makeText(this,"Unable to verify admin",Toast.LENGTH_LONG).show(); finish() }
-    }
-
-    private fun loadSchools() {
-        progress.visibility=View.VISIBLE; list.removeAllViews()
-        repo.pendingSchools({ schools ->
-            progress.visibility=View.GONE
-            status.text=if(schools.isEmpty()) "No pending school registrations" else "${schools.size} school(s) awaiting review"
-            schools.forEach { addSchoolCard(it) }
-        }, { error -> progress.visibility=View.GONE; status.text=error })
-    }
-
-    private fun addSchoolCard(school: UserProfile) {
-        val card=MaterialCardView(this).apply { radius=dp(20).toFloat(); cardElevation=dp(3).toFloat(); setCardBackgroundColor(Color.WHITE); setContentPadding(dp(18),dp(18),dp(18),dp(18)) }
-        val body=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL }
-        body.addView(TextView(this).apply { text=school.schoolName.ifBlank { school.name }; textSize=20f; setTypeface(typeface,1); setTextColor(Color.rgb(38,43,68)) })
-        body.addView(TextView(this).apply { text="Contact: ${school.name}\n${school.email}"; textSize=14f; setTextColor(Color.rgb(95,102,124)); setPadding(0,dp(7),0,dp(10)) })
-        val actions=LinearLayout(this)
-        actions.addView(Button(this).apply { text="Approve"; isAllCaps=false; setOnClickListener { decide(school.uid,true) } })
-        actions.addView(Button(this).apply { text="Reject"; isAllCaps=false; setOnClickListener { decide(school.uid,false) } })
-        body.addView(actions); card.addView(body)
-        val lp=LinearLayout.LayoutParams(-1,-2); lp.setMargins(0,0,0,dp(12)); list.addView(card,lp)
-    }
-
-    private fun showInfo(title:String, text:String) {
-        progress.visibility=View.GONE; list.removeAllViews(); status.text=title
-        val card=MaterialCardView(this).apply { radius=dp(20).toFloat(); setCardBackgroundColor(Color.WHITE); setContentPadding(dp(20),dp(24),dp(20),dp(24)) }
-        card.addView(TextView(this).apply { this.text="$title\n\n$text"; textSize=18f; setTextColor(Color.rgb(45,50,75)) }); list.addView(card)
-    }
-
-    private fun decide(uid:String, approved:Boolean) { repo.setSchoolApproval(uid,approved) { ok,message -> Toast.makeText(this,message,Toast.LENGTH_SHORT).show(); if(ok) loadSchools() } }
-}
+class AdminActivity:AppCompatActivity(){private val repo=AdminRepository();private val coupons=CouponRepository();private val db=FirebaseFirestore.getInstance();private lateinit var list:LinearLayout;private lateinit var status:TextView;private lateinit var progress:ProgressBar;private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt();override fun onCreate(b:Bundle?){super.onCreate(b);setContentView(R.layout.activity_admin);list=findViewById(R.id.schoolList);status=findViewById(R.id.adminStatus);progress=findViewById(R.id.adminProgress);findViewById<Button>(R.id.pendingTab).setOnClickListener{loadSchools()};findViewById<Button>(R.id.usersTab).setOnClickListener{loadUsers()};findViewById<Button>(R.id.couponsTab).setOnClickListener{loadCoupons()};findViewById<Button>(R.id.proTab).setOnClickListener{loadPro()};verify()}
+private fun verify(){val uid=FirebaseAuth.getInstance().currentUser?.uid?:return finish();db.collection("users").document(uid).get().addOnSuccessListener{if(it.getString("role")!="admin")finish() else loadSchools()}.addOnFailureListener{finish()}}
+private fun loadSchools(){progress.visibility=View.VISIBLE;list.removeAllViews();repo.pendingSchools({s->progress.visibility=View.GONE;status.text="Pending Schools: ${s.size}";s.forEach{school->card("${school.schoolName.ifBlank{school.name}}\n${school.email}","Approve","Reject",{repo.setSchoolApproval(school.uid,true){_,m->Toast.makeText(this,m,0).show();loadSchools()}},{repo.setSchoolApproval(school.uid,false){_,m->Toast.makeText(this,m,0).show();loadSchools()}})}},{status.text=it;progress.visibility=View.GONE})}
+private fun loadUsers(){list.removeAllViews();status.text="User Management";db.collection("users").get().addOnSuccessListener{s->status.text="Users: ${s.size()}";s.documents.forEach{d->card("${d.getString("name")?:d.getString("schoolName")?:"User"}\n${d.getString("email")?:""}\nRole: ${d.getString("role")?:"—"}",null,null,null,null)}}.addOnFailureListener{status.text=it.message}}
+private fun loadCoupons(){list.removeAllViews();status.text="Coupon Management";val code=EditText(this).apply{hint="Coupon code"};val discount=EditText(this).apply{hint="Discount 1-100";inputType=2};list.addView(code);list.addView(discount);list.addView(Button(this).apply{text="Create Coupon";setOnClickListener{coupons.createCoupon(code.text.toString(),discount.text.toString().toIntOrNull()?:0){_,m->Toast.makeText(this@AdminActivity,m,0).show();loadCoupons()}}});coupons.all({rows->rows.forEach{c->card("${c.code} • ${c.discountPercent}% • ${if(c.active)"Active" else "Disabled"}",if(c.active)"Disable" else "Activate",null,{coupons.setActive(c.code,!c.active){_,m->Toast.makeText(this,m,0).show();loadCoupons()}},null)}},{Toast.makeText(this,it,0).show()})}
+private fun loadPro(){list.removeAllViews();status.text="EduNexa Pro";db.collection("users").whereEqualTo("pro",true).get().addOnSuccessListener{s->card("Active Pro Accounts\n${s.size()} user(s)",null,null,null,null)}.addOnFailureListener{card("Pro dashboard ready\nNo subscription data available yet",null,null,null,null)}}
+private fun card(text:String,a:String?,b:String?,goA:(()->Unit)?,goB:(()->Unit)?){val c=MaterialCardView(this).apply{radius=dp(18).toFloat();setCardBackgroundColor(Color.WHITE);setContentPadding(dp(16),dp(16),dp(16),dp(16))};val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL};box.addView(TextView(this).apply{this.text=text;textSize=16f});if(a!=null){val row=LinearLayout(this);row.addView(Button(this).apply{this.text=a;setOnClickListener{goA?.invoke()}});if(b!=null)row.addView(Button(this).apply{this.text=b;setOnClickListener{goB?.invoke()}});box.addView(row)};c.addView(box);list.addView(c,LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(10))})}}
