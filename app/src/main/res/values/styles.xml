@@ -1,0 +1,10 @@
+<resources>
+    <style name="Theme.EduNexa" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#3157D5</item>
+        <item name="colorPrimaryVariant">#2443A8</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
+    </style>
+</resources>
