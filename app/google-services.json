@@ -8,23 +8,76 @@
     {
       "client_info": {
         "mobilesdk_app_id": "1:166593018818:android:50be56ca1a8ffccab7b45b",
-        "android_client_info": { "package_name": "com.edunexa.app" }
+        "android_client_info": {
+          "package_name": "com.edunexa.app"
+        }
       },
-      "oauth_client": [{ "client_id": "166593018818-i6bufjigsetojtlbvooeo9h7d8rhstnd.apps.googleusercontent.com", "client_type": 3 }],
-      "api_key": [{ "current_key": "AIzaSyA--tjuVaj0rzrOJLSh7T3sqx56yn9-Dc0" }],
-      "services": { "appinvite_service": { "other_platform_oauth_client": [{ "client_id": "166593018818-i6bufjigsetojtlbvooeo9h7d8rhstnd.apps.googleusercontent.com", "client_type": 3 }] } }
+      "oauth_client": [
+        {
+          "client_id": "166593018818-cs9ied4ko075qn106ecl6a180243tik5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.edunexa.app",
+            "certificate_hash": "b5a9959a750f9e57df3c7ac0dcf7f3fd33a089a3"
+          }
+        },
+        {
+          "client_id": "166593018818-i6bufjigsetojtlbvooeo9h7d8rhstnd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA--tjuVaj0rzrOJLSh7T3sqx56yn9-Dc0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "166593018818-i6bufjigsetojtlbvooeo9h7d8rhstnd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
     },
     {
       "client_info": {
         "mobilesdk_app_id": "1:166593018818:android:ad7d8924ba234ad2b7b45b",
-        "android_client_info": { "package_name": "org.shivam.studentresultpro" }
+        "android_client_info": {
+          "package_name": "org.shivam.studentresultpro"
+        }
       },
       "oauth_client": [
-        { "client_id": "166593018818-o26t0st9iets6u3sr92o7ufo495790r9.apps.googleusercontent.com", "client_type": 1, "android_info": { "package_name": "org.shivam.studentresultpro", "certificate_hash": "2d89b277d23b133526bd2d7dcca6d9bbdc3203fa" } },
-        { "client_id": "166593018818-i6bufjigsetojtlbvooeo9h7d8rhstnd.apps.googleusercontent.com", "client_type": 3 }
+        {
+          "client_id": "166593018818-o26t0st9iets6u3sr92o7ufo495790r9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "org.shivam.studentresultpro",
+            "certificate_hash": "2d89b277d23b133526bd2d7dcca6d9bbdc3203fa"
+          }
+        },
+        {
+          "client_id": "166593018818-i6bufjigsetojtlbvooeo9h7d8rhstnd.apps.googleusercontent.com",
+          "client_type": 3
+        }
       ],
-      "api_key": [{ "current_key": "AIzaSyA--tjuVaj0rzrOJLSh7T3sqx56yn9-Dc0" }],
-      "services": { "appinvite_service": { "other_platform_oauth_client": [{ "client_id": "166593018818-i6bufjigsetojtlbvooeo9h7d8rhstnd.apps.googleusercontent.com", "client_type": 3 }] } }
+      "api_key": [
+        {
+          "current_key": "AIzaSyA--tjuVaj0rzrOJLSh7T3sqx56yn9-Dc0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "166593018818-i6bufjigsetojtlbvooeo9h7d8rhstnd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"
