@@ -19,6 +19,7 @@ class AuthActivity : AppCompatActivity() {
     private val db = FirebaseFirestore.getInstance()
     private val firebaseAuth = FirebaseAuth.getInstance()
     private var selectedRole = "student"
+    private var routingSession = false
 
     private lateinit var name: EditText
     private lateinit var school: EditText
@@ -76,6 +77,15 @@ class AuthActivity : AppCompatActivity() {
         val register=findViewById<TextView>(R.id.registerBtn); val login=findViewById<TextView>(R.id.loginBtn); val approval=findViewById<TextView>(R.id.approvalInfo)
         val social=findViewById<LinearLayout>(R.id.socialOptions); status=findViewById(R.id.statusText); progress=findViewById(R.id.progress)
 
+        // Firebase Auth persists a valid session locally. Route it before showing login again.
+        if (firebaseAuth.currentUser != null) {
+            welcome.visibility = View.GONE
+            form.visibility = View.GONE
+            progress.visibility = View.VISIBLE
+            status.text = "Restoring your session..."
+            routeCurrentUser(status, progress)
+        }
+
         fun reset(){ listOf(name,school,email,password,classInput,contact,address).forEach{it.text.clear()}; status.text="" }
         fun signup(role:String){ reset(); selectedRole=role; welcome.visibility=View.GONE; form.visibility=View.VISIBLE; register.visibility=View.VISIBLE; login.visibility=View.GONE; social.visibility=View.VISIBLE
             val isSchool=role=="school"; header.setImageResource(if(isSchool) R.drawable.school_art else R.drawable.student_art)
@@ -106,6 +116,37 @@ class AuthActivity : AppCompatActivity() {
         }
         login.setOnClickListener{ if(email.text.isBlank()||password.text.isBlank()){status.text="Enter email and password";return@setOnClickListener};progress.visibility=View.VISIBLE;authRepository.login(email.text.toString().trim(),password.text.toString()){ok,msg->status.text=msg;if(ok)routeCurrentUser(status,progress)else progress.visibility=View.GONE} }
     }
-    private fun routeCurrentUser(status:TextView,progress:ProgressBar){ val uid=FirebaseAuth.getInstance().currentUser?.uid?:run{progress.visibility=View.GONE;return};db.collection("users").document(uid).get().addOnSuccessListener{doc->progress.visibility=View.GONE;when(doc.getString("role")){"admin"->open(AdminActivity::class.java);"school"->if(doc.getBoolean("schoolApproved")==true)open(SchoolActivity::class.java)else open(PendingApprovalActivity::class.java);"student"->open(MainActivity::class.java);else->{status.text="Account role is not configured";FirebaseAuth.getInstance().signOut()}}}.addOnFailureListener{progress.visibility=View.GONE;status.text=it.message?:"Could not load account"} }
-    private fun open(target:Class<*>){startActivity(Intent(this,target));finish()}
+
+    override fun onStart() {
+        super.onStart()
+        if (::status.isInitialized && firebaseAuth.currentUser != null && !routingSession) {
+            routeCurrentUser(status, progress)
+        }
+    }
+
+    private fun routeCurrentUser(status:TextView,progress:ProgressBar){
+        if (routingSession) return
+        val uid=FirebaseAuth.getInstance().currentUser?.uid?:run{progress.visibility=View.GONE;return}
+        routingSession=true
+        progress.visibility=View.VISIBLE
+        db.collection("users").document(uid).get().addOnSuccessListener{doc->
+            routingSession=false
+            progress.visibility=View.GONE
+            when(doc.getString("role")){
+                "admin"->open(AdminActivity::class.java)
+                "school"->if(doc.getBoolean("schoolApproved")==true)open(SchoolActivity::class.java)else open(PendingApprovalActivity::class.java)
+                "student"->open(MainActivity::class.java)
+                else->{status.text="Account role is not configured";FirebaseAuth.getInstance().signOut()}
+            }
+        }.addOnFailureListener{
+            routingSession=false
+            progress.visibility=View.GONE
+            status.text=it.message?:"Could not restore account. Check your internet and try again."
+        }
+    }
+
+    private fun open(target:Class<*>){
+        startActivity(Intent(this,target).apply { flags=Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK })
+        finish()
+    }
 }
