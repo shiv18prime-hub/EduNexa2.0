@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#F6F7FC">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Publish Notice" android:textSize="28sp" android:textStyle="bold" android:textColor="#252A45"/>
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Send an update to your connected students" android:textColor="#667085"/>
+  <EditText android:id="@+id/noticeTitleInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="20dp" android:hint="Notice title"/>
+  <EditText android:id="@+id/noticeMessageInput" android:layout_width="match_parent" android:layout_height="140dp" android:layout_marginTop="10dp" android:gravity="top" android:padding="12dp" android:hint="Write notice message" android:inputType="textMultiLine"/>
+  <EditText android:id="@+id/noticeClassInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:hint="Class / Section (optional)"/>
+  <CheckBox android:id="@+id/importantCheck" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="Mark as important"/>
+  <Button android:id="@+id/publishNoticeBtn" android:layout_width="match_parent" android:layout_height="58dp" android:layout_marginTop="14dp" android:text="Publish Notice" android:textAllCaps="false"/>
+  <ProgressBar android:id="@+id/publishNoticeProgress" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:layout_marginTop="12dp" android:visibility="gone"/>
+  <TextView android:id="@+id/publishNoticeStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:padding="12dp" android:textColor="#5F667C"/>
+ </LinearLayout>
+</ScrollView>
