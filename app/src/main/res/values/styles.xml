@@ -13,5 +13,7 @@
         <item name="android:statusBarColor">#F6F7FC</item>
         <item name="android:navigationBarColor">#FFFFFF</item>
         <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:forceDarkAllowed">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
     </style>
 </resources>
