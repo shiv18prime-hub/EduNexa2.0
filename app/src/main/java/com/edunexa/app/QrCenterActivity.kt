@@ -6,8 +6,8 @@ import android.os.Bundle
 import android.view.Gravity
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.codescanner.GmsBarcodeScannerOptions
-import com.google.android.gms.codescanner.GmsBarcodeScanning
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -29,7 +29,7 @@ class QrCenterActivity : AppCompatActivity() {
         setContentView(ScrollView(this).apply{addView(root)})
         generate.setOnClickListener{generateQr(image,status)}
         val options=GmsBarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).enableAutoZoom().build();val scanner=GmsBarcodeScanning.getClient(this,options)
-        scan.setOnClickListener{scanner.startScan().addOnSuccessListener{handleScan(it.rawValue.orEmpty(),status)}.addOnCanceledListener{status.text="Scan cancelled"}.addOnFailureListener{status.text=it.message?:"Scanner unavailable"}}
+        scan.setOnClickListener{scanner.startScan().addOnSuccessListener{barcode->handleScan(barcode.rawValue.orEmpty(),status)}.addOnCanceledListener{status.text="Scan cancelled"}.addOnFailureListener{e->status.text=e.message?:"Scanner unavailable"}}
     }
     private fun generateQr(image:ImageView,status:TextView){
         val uid=auth.currentUser?.uid?:return
