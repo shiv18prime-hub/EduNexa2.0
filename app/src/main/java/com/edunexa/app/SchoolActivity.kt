@@ -2,7 +2,6 @@ package com.edunexa.app
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -11,84 +10,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class SchoolActivity : AppCompatActivity() {
-    private val db = FirebaseFirestore.getInstance()
-    private val auth = FirebaseAuth.getInstance()
-    private lateinit var schoolName: TextView
-    private lateinit var schoolStatus: TextView
-    private lateinit var schoolMeta: TextView
-    private lateinit var studentCount: TextView
-    private lateinit var requestCount: TextView
-    private lateinit var dashboardHint: TextView
-    private lateinit var serviceButtons: List<Button>
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_school)
-        schoolName = findViewById(R.id.schoolName)
-        schoolStatus = findViewById(R.id.schoolStatus)
-        schoolMeta = findViewById(R.id.schoolMeta)
-        studentCount = findViewById(R.id.studentCount)
-        requestCount = findViewById(R.id.requestCount)
-        dashboardHint = findViewById(R.id.dashboardHint)
-        serviceButtons = listOf(findViewById(R.id.studentsBtn), findViewById(R.id.resultsBtn), findViewById(R.id.mcqBtn), findViewById(R.id.attendanceBtn), findViewById(R.id.announcementBtn), findViewById(R.id.toolsBtn))
-        serviceButtons.forEach { it.isEnabled = false }
-        findViewById<Button>(R.id.studentsBtn).setOnClickListener { open(StudentManagementActivity::class.java) }
-        findViewById<Button>(R.id.resultsBtn).setOnClickListener { open(PublishResultActivity::class.java) }
-        findViewById<Button>(R.id.mcqBtn).setOnClickListener { open(PublishMcqActivity::class.java) }
-        findViewById<Button>(R.id.attendanceBtn).setOnClickListener { open(AttendanceActivity::class.java) }
-        findViewById<Button>(R.id.announcementBtn).setOnClickListener { open(PublishNoticeActivity::class.java) }
-        findViewById<Button>(R.id.toolsBtn).setOnClickListener { open(ToolsActivity::class.java) }
-        findViewById<Button>(R.id.logoutBtn).setOnClickListener { auth.signOut(); goAuth() }
-        verifySchool()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (::schoolStatus.isInitialized && auth.currentUser != null) verifySchool()
-    }
-
-    private fun open(cls: Class<*>) = startActivity(Intent(this, cls))
-
-    private fun verifySchool() {
-        val uid = auth.currentUser?.uid ?: return goAuth()
-        schoolStatus.text = "Checking school approval…"
-        dashboardHint.text = "Verifying secure school access…"
-        db.collection("users").document(uid).get().addOnSuccessListener { d ->
-            if (d.getString("role") != "school" || d.getBoolean("schoolApproved") != true) {
-                serviceButtons.forEach { it.isEnabled = false }
-                Toast.makeText(this, "School services require admin approval", Toast.LENGTH_LONG).show()
-                startActivity(Intent(this, PendingApprovalActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK })
-                finish(); return@addOnSuccessListener
-            }
-            val name = d.getString("schoolName") ?: d.getString("name") ?: "EduNexa School"
-            val address = d.getString("address").orEmpty()
-            val contact = d.getString("contactNumber").orEmpty()
-            schoolName.text = name
-            schoolStatus.text = "✓ Admin Verified School"
-            schoolMeta.text = listOf(address, contact).filter { it.isNotBlank() }.joinToString(" • ").ifBlank { "EduNexa School Account" }
-            dashboardHint.text = "All approved school services are active."
-            serviceButtons.forEach { it.isEnabled = true }
-            loadDashboardCounts(uid)
-        }.addOnFailureListener {
-            serviceButtons.forEach { it.isEnabled = false }
-            schoolStatus.text = "Unable to verify school"
-            dashboardHint.text = "School controls are locked until your account can be verified."
-            Toast.makeText(this, "Could not verify school account. Check internet.", Toast.LENGTH_LONG).show()
-        }
-    }
-
-    private fun loadDashboardCounts(uid: String) {
-        studentCount.text = "…"; requestCount.text = "…"
-        db.collection("schoolStudents").whereEqualTo("schoolId", uid).get()
-            .addOnSuccessListener { studentCount.text = it.size().toString() }
-            .addOnFailureListener { studentCount.text = "—" }
-        db.collection("schoolJoinRequests").whereEqualTo("schoolId", uid).whereEqualTo("status", "pending").get()
-            .addOnSuccessListener { requestCount.text = it.size().toString() }
-            .addOnFailureListener { requestCount.text = "—" }
-    }
-
-    private fun goAuth() {
-        startActivity(Intent(this, AuthActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK })
-        finish()
-    }
+    private val db=FirebaseFirestore.getInstance();private val auth=FirebaseAuth.getInstance()
+    private lateinit var schoolName:TextView;private lateinit var schoolStatus:TextView;private lateinit var schoolMeta:TextView;private lateinit var studentCount:TextView;private lateinit var requestCount:TextView;private lateinit var dashboardHint:TextView;private lateinit var serviceButtons:List<Button>
+    override fun onCreate(b:Bundle?){super.onCreate(b);setContentView(R.layout.activity_school);schoolName=findViewById(R.id.schoolName);schoolStatus=findViewById(R.id.schoolStatus);schoolMeta=findViewById(R.id.schoolMeta);studentCount=findViewById(R.id.studentCount);requestCount=findViewById(R.id.requestCount);dashboardHint=findViewById(R.id.dashboardHint);serviceButtons=listOf(findViewById(R.id.studentsBtn),findViewById(R.id.resultsBtn),findViewById(R.id.mcqBtn),findViewById(R.id.attendanceBtn),findViewById(R.id.announcementBtn),findViewById(R.id.qrBtn),findViewById(R.id.toolsBtn));serviceButtons.forEach{it.isEnabled=false};findViewById<Button>(R.id.studentsBtn).setOnClickListener{open(StudentManagementActivity::class.java)};findViewById<Button>(R.id.resultsBtn).setOnClickListener{open(PublishResultActivity::class.java)};findViewById<Button>(R.id.mcqBtn).setOnClickListener{open(PublishMcqActivity::class.java)};findViewById<Button>(R.id.attendanceBtn).setOnClickListener{open(AttendanceActivity::class.java)};findViewById<Button>(R.id.announcementBtn).setOnClickListener{open(PublishNoticeActivity::class.java)};findViewById<Button>(R.id.qrBtn).setOnClickListener{open(QrCenterActivity::class.java)};findViewById<Button>(R.id.toolsBtn).setOnClickListener{open(ToolsActivity::class.java)};findViewById<Button>(R.id.logoutBtn).setOnClickListener{auth.signOut();goAuth()};verifySchool()}
+    override fun onResume(){super.onResume();if(::schoolStatus.isInitialized&&auth.currentUser!=null)verifySchool()}
+    private fun open(c:Class<*>)=startActivity(Intent(this,c))
+    private fun verifySchool(){val uid=auth.currentUser?.uid?:return goAuth();schoolStatus.text="Checking school approval…";dashboardHint.text="Verifying secure school access…";db.collection("users").document(uid).get().addOnSuccessListener{d->if(d.getString("role")!="school"||d.getBoolean("schoolApproved")!=true){serviceButtons.forEach{it.isEnabled=false};Toast.makeText(this,"School services require admin approval",Toast.LENGTH_LONG).show();startActivity(Intent(this,PendingApprovalActivity::class.java).apply{flags=Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK});finish();return@addOnSuccessListener};val name=d.getString("schoolName")?:d.getString("name")?:"EduNexa School";schoolName.text=name;schoolStatus.text="✓ Admin Verified School";schoolMeta.text=listOf(d.getString("address").orEmpty(),d.getString("contactNumber").orEmpty()).filter{it.isNotBlank()}.joinToString(" • ").ifBlank{"EduNexa School Account"};dashboardHint.text="All approved school services are active.";serviceButtons.forEach{it.isEnabled=true};loadDashboardCounts(uid)}.addOnFailureListener{serviceButtons.forEach{it.isEnabled=false};schoolStatus.text="Unable to verify school";dashboardHint.text="School controls are locked until your account can be verified.";Toast.makeText(this,"Could not verify school account. Check internet.",Toast.LENGTH_LONG).show()}}
+    private fun loadDashboardCounts(uid:String){studentCount.text="…";requestCount.text="…";db.collection("users").whereEqualTo("role","student").whereEqualTo("schoolId",uid).get().addOnSuccessListener{studentCount.text=it.size().toString()}.addOnFailureListener{studentCount.text="—"};db.collection("schoolJoinRequests").whereEqualTo("schoolId",uid).whereEqualTo("status","pending").get().addOnSuccessListener{requestCount.text=it.size().toString()}.addOnFailureListener{requestCount.text="—"}}
+    private fun goAuth(){startActivity(Intent(this,AuthActivity::class.java).apply{flags=Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK});finish()}
 }
