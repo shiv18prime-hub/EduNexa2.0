@@ -1,66 +1,16 @@
 package com.edunexa.app
-
 import android.app.Activity
 import android.content.Intent
-import android.graphics.BitmapFactory
+import android.graphics.*
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import java.io.ByteArrayOutputStream
-
-class TargetKbToolActivity : AppCompatActivity() {
-    private lateinit var size: EditText
-    private lateinit var status: TextView
-    private lateinit var preview: ImageView
-    private lateinit var save: Button
-    private var pendingBytes: ByteArray? = null
-
-    override fun onCreate(b: Bundle?) {
-        super.onCreate(b)
-        val r = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(36,36,36,36) }
-        r.addView(TextView(this).apply { text="Target KB Compressor"; textSize=26f; setTypeface(typeface,1) })
-        r.addView(TextView(this).apply { text="Compress → Preview → Save\nNothing is saved automatically."; setPadding(0,8,0,18) })
-        size = EditText(this).apply { hint="Target size KB: 10, 20, 50, 100..."; inputType=2 }
-        r.addView(size)
-        r.addView(Button(this).apply { text="Choose & Compress Image"; isAllCaps=false; setOnClickListener { startActivityForResult(Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI),91) } })
-        preview = ImageView(this).apply { adjustViewBounds=true; visibility=View.GONE }
-        r.addView(preview, LinearLayout.LayoutParams(-1,520))
-        save = Button(this).apply { text="Save Compressed Image"; isAllCaps=false; visibility=View.GONE; setOnClickListener { chooseSave() } }
-        r.addView(save)
-        status = TextView(this).apply { setPadding(0,16,0,0) }
-        r.addView(status)
-        setContentView(ScrollView(this).apply { addView(r) })
-    }
-
-    override fun onActivityResult(req:Int,res:Int,data:Intent?) {
-        super.onActivityResult(req,res,data)
-        if(res != Activity.RESULT_OK) return
-        if(req == 91) {
-            val target=size.text.toString().toIntOrNull()
-            if(target==null || target<1){ status.text="Enter target KB first"; return }
-            val uri=data?.data?:return
-            val bmp=contentResolver.openInputStream(uri)?.use{BitmapFactory.decodeStream(it)}?:return
-            var q=95
-            var bytes=ByteArray(0)
-            while(q>=5){ val out=ByteArrayOutputStream(); bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG,q,out); bytes=out.toByteArray(); if(bytes.size<=target*1024) break; q-=5 }
-            if(bytes.size>target*1024){ pendingBytes=null; save.visibility=View.GONE; status.text="Could not reach ${target}KB without resizing"; return }
-            pendingBytes=bytes
-            preview.setImageBitmap(BitmapFactory.decodeByteArray(bytes,0,bytes.size))
-            preview.visibility=View.VISIBLE
-            save.visibility=View.VISIBLE
-            status.text="Preview ready • ${bytes.size/1024}KB. Tap Save when ready."
-        } else if(req == 92) {
-            val uri=data?.data?:return
-            val bytes=pendingBytes?:return
-            runCatching { contentResolver.openOutputStream(uri)?.use{it.write(bytes)}; status.text="Saved successfully • ${bytes.size/1024}KB" }
-                .onFailure { status.text="Save failed: ${it.message}" }
-        }
-    }
-
-    private fun chooseSave(){
-        if(pendingBytes==null) return
-        startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply { addCategory(Intent.CATEGORY_OPENABLE); type="image/jpeg"; putExtra(Intent.EXTRA_TITLE,"EduNexa_${System.currentTimeMillis()}.jpg") },92)
-    }
-}
+class TargetKbToolActivity:AppCompatActivity(){private lateinit var size:EditText;private lateinit var status:TextView;private lateinit var preview:ImageView;private lateinit var save:Button;private lateinit var qualityText:TextView;private var source:Bitmap?=null;private var pendingBytes:ByteArray?=null;private var maxQuality=95;private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt();private fun bg(c:String)=GradientDrawable().apply{setColor(Color.parseColor(c));cornerRadius=dp(16).toFloat()}
+override fun onCreate(b:Bundle?){super.onCreate(b);val r=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(20),dp(18),dp(30));setBackgroundColor(Color.parseColor("#F6F7FC"))};r.addView(TextView(this).apply{text="Target KB Compressor";textSize=26f;setTypeface(typeface,1);setTextColor(Color.parseColor("#17213D"))});r.addView(TextView(this).apply{text="Set target • preview • adjust quality • save";setTextColor(Color.parseColor("#72798F"));setPadding(0,dp(5),0,dp(14))});val card=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(14),dp(12),dp(14),dp(14));background=bg("#FFFFFF")};size=EditText(this).apply{hint="Target size KB: 20, 50, 100...";inputType=2};card.addView(size);card.addView(Button(this).apply{text="Choose Image";isAllCaps=false;setOnClickListener{startActivityForResult(Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI),91)}});r.addView(card);r.addView(TextView(this).apply{text="LIVE PREVIEW";setTypeface(typeface,1);setTextColor(Color.parseColor("#3157D5"));setPadding(0,dp(18),0,dp(7))});preview=ImageView(this).apply{adjustViewBounds=true;scaleType=ImageView.ScaleType.FIT_CENTER;background=bg("#FFFFFF")};r.addView(preview,LinearLayout.LayoutParams(-1,dp(390)));qualityText=TextView(this).apply{text="Max quality: 95%";setPadding(0,dp(10),0,0)};r.addView(qualityText);val seek=SeekBar(this).apply{max=90;progress=90;setOnSeekBarChangeListener(object:SeekBar.OnSeekBarChangeListener{override fun onProgressChanged(s:SeekBar?,p:Int,f:Boolean){maxQuality=p+5;qualityText.text="Max quality: $maxQuality%";if(f)compress()};override fun onStartTrackingTouch(s:SeekBar?){};override fun onStopTrackingTouch(s:SeekBar?){}})};r.addView(seek);r.addView(Button(this).apply{text="Recompress / Update Preview";isAllCaps=false;setOnClickListener{compress()}});save=Button(this).apply{text="Save Compressed Image";isAllCaps=false;visibility=View.GONE;setOnClickListener{chooseSave()}};r.addView(save);status=TextView(this).apply{text="Nothing is saved automatically.";setPadding(0,dp(10),0,0)};r.addView(status);setContentView(ScrollView(this).apply{addView(r)})}
+private fun compress(){val bmp=source?:return;val target=size.text.toString().toIntOrNull();if(target==null||target<1){status.text="Enter target KB first";return};var work=bmp;var bytes=ByteArray(0);var q=maxQuality;var scale=1f;repeat(8){while(q>=10){val out=ByteArrayOutputStream();work.compress(Bitmap.CompressFormat.JPEG,q,out);bytes=out.toByteArray();if(bytes.size<=target*1024)return@repeat;q-=5};if(bytes.size>target*1024){scale*=0.88f;work=Bitmap.createScaledBitmap(bmp,(bmp.width*scale).toInt().coerceAtLeast(100),(bmp.height*scale).toInt().coerceAtLeast(100),true);q=maxQuality}};if(bytes.isEmpty()){status.text="Compression failed";return};pendingBytes=bytes;preview.setImageBitmap(BitmapFactory.decodeByteArray(bytes,0,bytes.size));save.visibility=View.VISIBLE;status.text="Preview • ${bytes.size/1024} KB • ${work.width}×${work.height}px • edit quality or target and update"}
+override fun onActivityResult(req:Int,res:Int,data:Intent?){super.onActivityResult(req,res,data);if(res!=Activity.RESULT_OK)return;if(req==91){source=data?.data?.let{u->contentResolver.openInputStream(u)?.use{BitmapFactory.decodeStream(it)}};if(size.text.isBlank())size.setText("100");compress()}else if(req==92){val uri=data?.data?:return;val bytes=pendingBytes?:return;runCatching{contentResolver.openOutputStream(uri)?.use{it.write(bytes)};status.text="Saved successfully • ${bytes.size/1024} KB"}.onFailure{status.text="Save failed: ${it.message}"}}}
+private fun chooseSave(){if(pendingBytes==null)return;startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="image/jpeg";putExtra(Intent.EXTRA_TITLE,"EduNexa_${System.currentTimeMillis()}.jpg")},92)}}
