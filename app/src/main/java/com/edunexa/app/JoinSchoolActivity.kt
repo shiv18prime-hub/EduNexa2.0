@@ -5,8 +5,8 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.edunexa.app.data.SchoolJoinRepository
-import com.google.android.gms.codescanner.GmsBarcodeScannerOptions
-import com.google.android.gms.codescanner.GmsBarcodeScanning
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 
 class JoinSchoolActivity : AppCompatActivity() {
@@ -32,7 +32,7 @@ class JoinSchoolActivity : AppCompatActivity() {
                     else -> ""
                 }
                 if (code.isBlank()) status.text = "This is not an EduNexa school QR." else { input.setText(code); submit(code) }
-            }.addOnCanceledListener { status.text = "Scan cancelled" }.addOnFailureListener { status.text = it.message ?: "QR scanner unavailable" }
+            }.addOnCanceledListener { status.text = "Scan cancelled" }.addOnFailureListener { e -> status.text = e.message ?: "QR scanner unavailable" }
         }
     }
 }
