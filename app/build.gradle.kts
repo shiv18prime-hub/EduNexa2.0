@@ -3,5 +3,6 @@ android { namespace="com.edunexa.app";compileSdk=35;defaultConfig{applicationId=
 dependencies {
  implementation(platform("com.google.firebase:firebase-bom:33.7.0"));implementation("com.google.firebase:firebase-auth");implementation("com.google.firebase:firebase-firestore");implementation("com.google.firebase:firebase-messaging")
  implementation("com.google.android.gms:play-services-auth:21.2.0");implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+ implementation("com.google.mlkit:barcode-scanning:17.3.0")
  implementation("androidx.core:core-ktx:1.15.0");implementation("androidx.appcompat:appcompat:1.7.0");implementation("com.google.android.material:material:1.12.0");implementation("androidx.constraintlayout:constraintlayout:2.2.0");implementation("androidx.documentfile:documentfile:1.0.1");implementation("com.tom-roush:pdfbox-android:2.0.27.0");implementation("com.google.zxing:core:3.5.3")
 }
