@@ -18,3 +18,20 @@ test('cancellation and disconnect recover membership and revoke school scope',as
 test('refund is idempotent and reverses only unused purchased time',async()=>{await db.doc('proOrders/order_r').set({uid:'s',amount:9900,currency:'INR',days:30,status:'created'});const captured={id:'pay_r',order_id:'order_r',status:'captured',amount:9900,currency:'INR'};await api.fulfill('order_r',captured);time+=86400000;const refund={...captured,status:'refunded',amount_refunded:9900};await api.refundPayment(refund);assert.equal((await db.doc('users/s').get()).data().pro,false);await api.refundPayment(refund);await api.fulfill('order_r',captured);assert.equal((await db.doc('users/s').get()).data().pro,false);});
 test('legacy profile flags cannot create school or Pro privileges',async()=>{await db.doc('users/forged').set({uid:'forged',role:'school',schoolApproved:true,pro:true,proUntil:9999999999999,name:'Fake'});await denies(()=>api.schoolScope('forged'),'permission-denied');assert.equal((await api.dashboard('forged')).pro,false);await db.doc('users/s').update({pro:true,proUntil:9999999999999});await api.grantPro('admin',{uid:'s',days:30});assert.equal((await db.doc('proEntitlements/s').get()).data().until,time+30*86400000);});
 test('checkout reuse does not create multiple orders or allow the client to choose price',async()=>{let calls=0;const mock=services(db,{now:()=>time,paymentKey:()=> 'test_key',paymentSecret:()=> 'test_secret',paymentFetch:async(_url,request)=>{calls++;const body=JSON.parse(request.body);assert.equal(body.amount,9000);return {ok:true,json:async()=>({id:'order_mock'})};}});await db.doc('plans/pro').set({enabled:true,pricePaise:10000,days:30});await db.doc('coupons/OFF').set({active:true,discountPercent:10});const first=await mock.createProOrder('s',{code:'OFF',amount:1});const second=await mock.createProOrder('s',{code:'OFF'});assert.equal(first.orderId,second.orderId);assert.equal(calls,1);});
+test('legacy student connection cannot appear in a roster or receive published records',async()=>{
+ await db.doc('memberships/school_s').delete();
+ assert.deepEqual((await api.schoolStudents('teacher')).students,[]);
+ await denies(()=>api.publishResult('teacher',{studentId:'s',exam:'Term',subject:'Math',obtained:80,total:100}),'permission-denied');
+ await denies(()=>api.saveAttendance('teacher',{studentId:'s',date:'2026-10-12',present:true}),'permission-denied');
+});
+test('captured checkout honors its quote after coupon deletion or prior redemption without replay',async()=>{
+ for(const [orderId,uid] of [['order_deleted','s'],['order_redeemed','outsider']]){
+  await db.doc('proOrders/'+orderId).set({uid,amount:9000,currency:'INR',days:30,code:'OFF',status:'created'});
+  const p={id:'pay_'+orderId,order_id:orderId,status:'captured',amount:9000,currency:'INR'};
+  if(uid==='outsider')await db.doc('couponRedemptions/outsider_OFF').set({uid,code:'OFF',createdAt:1});
+  await api.fulfill(orderId,p);await api.fulfill(orderId,p);
+  assert.equal((await db.doc('proEntitlements/'+uid).get()).data().until,time+30*86400000);
+  assert.equal((await db.doc('proOrders/'+orderId).get()).data().status,'paid');
+ }
+ assert.equal((await db.doc('couponRedemptions/outsider_OFF').get()).data().createdAt,1);
+});
