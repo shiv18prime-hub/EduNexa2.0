@@ -22,18 +22,20 @@ CONFIG = {"client": [{
 
 
 class AndroidSigningTest(unittest.TestCase):
-    def test_classic_sdk_signer_output(self):
-        text = f"Signer #1 certificate SHA-1 digest: {REGISTERED}\n"
+    def certificate(self):
+        return (Path(__file__).parent / "fixtures" / "debug_certificate.pem").read_text()
+
+    def test_real_apk_certificate_fingerprint(self):
+        self.assertEqual(signing.signer_fingerprints(self.certificate()), [REGISTERED])
+
+    def test_localized_captions_do_not_change_certificate_identity(self):
+        text = self.certificate().replace("Signer #1:", "Unterzeichner 1:").replace("Certificate #1:", "Zertifikat 1:")
         self.assertEqual(signing.signer_fingerprints(text), [REGISTERED])
 
-    def test_sdk_range_signer_output(self):
-        text = f"Signer (minSdkVersion=24, maxSdkVersion=2147483647) certificate SHA-1 digest: {REGISTERED}\n"
-        self.assertEqual(signing.signer_fingerprints(text), [REGISTERED])
-
-    def test_public_key_and_source_stamp_are_not_app_signers(self):
-        text = (f"Signer #1 public key SHA-1 digest: {REGISTERED}\n"
-                f"Source Stamp Signer certificate SHA-1 digest: {REGISTERED}\n")
-        self.assertEqual(signing.signer_fingerprints(text), [])
+    def test_missing_or_ambiguous_debug_certificate_is_rejected(self):
+        for text in ["", self.certificate() * 2]:
+            with self.assertRaises(ValueError):
+                signing.signer_fingerprints(text)
 
     def test_registered_push_is_accepted_and_unregistered_pr_is_rejected(self):
         signing.validate_oauth(CONFIG, "com.edunexa.app", [REGISTERED], WEB.encode())
