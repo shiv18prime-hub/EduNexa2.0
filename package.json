@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore --project demo-edunexa \"node --test tests/firestore.test.cjs\""
+    "test": "firebase emulators:exec --only firestore --project demo-edunexa \"node --test tests/firestore.test.cjs functions/test/*.test.cjs\""
   },
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
   "homepage": "https://github.com/shiv18prime-hub/EduNexa2.0#readme",
   "devDependencies": {
     "@firebase/rules-unit-testing": "^6.0.0",
+    "esbuild": "^0.28.2",
     "firebase": "^13.0.0",
     "firebase-tools": "^13.35.1"
   },

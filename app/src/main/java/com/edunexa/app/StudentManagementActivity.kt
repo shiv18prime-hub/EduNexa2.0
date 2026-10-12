@@ -9,7 +9,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
-class StudentManagementActivity : AppCompatActivity() {
+class StudentManagementActivity : EduActivity() {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private lateinit var root: LinearLayout
@@ -20,7 +20,7 @@ class StudentManagementActivity : AppCompatActivity() {
         super.onCreate(b)
         root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(18), dp(18), dp(18), dp(18)) }
         setContentView(ScrollView(this).apply { addView(root) })
-        root.addView(TextView(this).apply { text = "Student Management"; textSize = 27f; setTypeface(typeface, android.graphics.Typeface.BOLD) })
+        root.addView(TextView(this).apply { text = "School Members"; textSize = 27f; setTypeface(typeface, android.graphics.Typeface.BOLD) })
         status = TextView(this).apply { text = "Loading students and requests…"; setPadding(0, dp(8), 0, dp(14)) }; root.addView(status)
         load()
     }
@@ -52,40 +52,16 @@ class StudentManagementActivity : AppCompatActivity() {
     }
 
     private fun loadConnected(sid: String, pending: Int) {
-        db.collection("users").whereEqualTo("role", "student").whereEqualTo("schoolId", sid).get().addOnSuccessListener { students ->
+        db.collection("users").whereEqualTo("schoolId", sid).get().addOnSuccessListener { students ->
             status.text = "${students.size()} connected • $pending pending"
-            root.addView(TextView(this).apply { text = "Connected Students (${students.size()})"; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(10), 0, dp(8)) })
+            root.addView(TextView(this).apply { text = "Connected Members (${students.size()})"; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(10), 0, dp(8)) })
             students.documents.forEach { d -> card(d.getString("name") ?: "Student", "${d.getString("email") ?: ""}\nClass: ${d.getString("className") ?: "Not set"}\nSchool Code: ${d.getString("schoolCode") ?: "—"}") }
         }.addOnFailureListener { status.text = it.message ?: "Could not load connected students" }
     }
 
-    private fun approve(requestId: String, studentId: String, code: String, schoolId: String) {
-        if (studentId.isBlank()) return reload("Invalid student request")
-        val userRef = db.collection("users").document(studentId)
-        val requestRef = db.collection("schoolJoinRequests").document(requestId)
-        db.runBatch { batch ->
-            batch.update(userRef, mapOf(
-                "schoolId" to schoolId, "schoolCode" to code, "schoolJoinStatus" to "connected",
-                "schoolJoinedAt" to FieldValue.serverTimestamp(),
-                "pendingSchoolId" to FieldValue.delete(), "pendingSchoolCode" to FieldValue.delete()
-            ))
-            batch.update(requestRef, mapOf("status" to "approved", "reviewedAt" to FieldValue.serverTimestamp()))
-        }.addOnSuccessListener { reload("Student approved") }
-            .addOnFailureListener { reload(it.message ?: "Could not approve student") }
-    }
-
-    private fun reject(requestId: String, studentId: String) {
-        if (studentId.isBlank()) return reload("Invalid student request")
-        db.runBatch { batch ->
-            batch.update(db.collection("schoolJoinRequests").document(requestId),
-                mapOf("status" to "rejected", "reviewedAt" to FieldValue.serverTimestamp()))
-            batch.update(db.collection("users").document(studentId), mapOf(
-                "schoolJoinStatus" to "rejected", "pendingSchoolId" to FieldValue.delete(),
-                "pendingSchoolCode" to FieldValue.delete()
-            ))
-        }.addOnSuccessListener { reload("Request rejected") }
-            .addOnFailureListener { reload(it.message ?: "Could not reject request") }
-    }
+    private fun approve(requestId:String,studentId:String,code:String,schoolId:String){review(studentId,true)}
+    private fun reject(requestId:String,studentId:String){review(studentId,false)}
+    private fun review(uid:String,approve:Boolean){com.edunexa.app.data.Backend.call("reviewJoin",mapOf("studentId" to uid,"approve" to approve),{reload(it["message"].toString())},{reload(it)})}
 
     private fun reload(message: String) { Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); load() }
 }

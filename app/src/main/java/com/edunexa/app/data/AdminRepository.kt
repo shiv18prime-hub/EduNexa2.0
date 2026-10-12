@@ -12,23 +12,5 @@ class AdminRepository {
             .addOnFailureListener { onError(it.message ?: "Could not load schools") }
     }
 
-    fun setSchoolApproval(uid: String, approved: Boolean, onResult: (Boolean, String) -> Unit) {
-        if (!approved) {
-            db.collection("users").document(uid).update("schoolApproved", false, "approvalStatus", "rejected")
-                .addOnSuccessListener { onResult(true, "School rejected") }
-                .addOnFailureListener { onResult(false, it.message ?: "Update failed") }
-            return
-        }
-        val code = "EDU-${Random.nextInt(100000, 999999)}"
-        val userRef = db.collection("users").document(uid)
-        val codeRef = db.collection("schoolCodes").document(code)
-        db.runTransaction { transaction ->
-            val school = transaction.get(userRef)
-            check(school.getString("role") == "school") { "School account required" }
-            check(!transaction.get(codeRef).exists()) { "School code collision. Try again." }
-            transaction.update(userRef, mapOf("schoolApproved" to true, "approvalStatus" to "approved", "schoolCode" to code))
-            transaction.set(codeRef, mapOf("schoolName" to (school.getString("schoolName") ?: school.getString("name") ?: "School"), "code" to code, "schoolId" to uid, "active" to true, "createdAt" to System.currentTimeMillis()))
-        }.addOnSuccessListener { onResult(true, "School approved • Code: $code") }
-            .addOnFailureListener { onResult(false, it.message ?: "Approval failed") }
-    }
+    fun setSchoolApproval(uid:String,approved:Boolean,onResult:(Boolean,String)->Unit){Backend.call("rotateCode",mapOf("schoolId" to uid,"approved" to approved),{onResult(true,"${it["message"]} • ${it["code"]}")},{onResult(false,it)})}
 }

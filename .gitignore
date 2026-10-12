@@ -3,3 +3,4 @@ local.properties
 **/build/
 node_modules/
 *-debug.log
+web/dist/

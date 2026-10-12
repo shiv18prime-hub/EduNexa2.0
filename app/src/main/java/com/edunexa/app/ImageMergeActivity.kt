@@ -22,7 +22,7 @@ import java.io.ByteArrayOutputStream
 import kotlin.math.ceil
 import kotlin.math.max
 
-class ImageMergeActivity : AppCompatActivity() {
+class ImageMergeActivity : EduActivity() {
     private lateinit var preview: ImageView
     private lateinit var status: TextView
     private lateinit var save: Button

@@ -9,7 +9,7 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 
-class JoinSchoolActivity : AppCompatActivity() {
+class JoinSchoolActivity : EduActivity() {
     private val repo = SchoolJoinRepository()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState); setContentView(R.layout.activity_join_school)

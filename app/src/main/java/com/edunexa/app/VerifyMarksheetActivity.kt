@@ -6,7 +6,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.firestore.FirebaseFirestore
 
-class VerifyMarksheetActivity : AppCompatActivity() {
+class VerifyMarksheetActivity : EduActivity() {
     private val db = FirebaseFirestore.getInstance()
     private lateinit var idInput: EditText
     private lateinit var result: TextView
@@ -25,18 +25,17 @@ class VerifyMarksheetActivity : AppCompatActivity() {
         result = TextView(this).apply { textSize=18f; gravity=Gravity.START; setPadding(0,24,0,20) }
         root.addView(result)
         setContentView(ScrollView(this).apply { addView(root) })
+        intent.getStringExtra("verificationId")?.let{idInput.setText(it);verify()}
     }
 
     private fun verify() {
         val id=idInput.text.toString().trim().uppercase()
         if(id.isBlank()){ result.text="Enter a Verification ID"; return }
         progress.visibility=android.view.View.VISIBLE; result.text=""
-        db.collection("marksheetVerifications").document(id).get().addOnSuccessListener { d ->
+        com.edunexa.app.data.Backend.call("verifyMarksheet",mapOf("id" to id),{d->
             progress.visibility=android.view.View.GONE
-            if(!d.exists()){ result.text="NOT FOUND\nNo EduNexa verification record exists for this ID."; return@addOnSuccessListener }
-            val approved=d.getBoolean("issuerApproved")==true
-            val badge=if(approved) "VERIFIED SCHOOL RECORD" else "UNOFFICIAL / PRACTICE RECORD"
-            result.text="$badge\n\nVerification ID: ${d.getString("verificationId") ?: id}\nSchool: ${d.getString("schoolName") ?: "-"}\nStudent: ${d.getString("studentName") ?: "-"}\nRoll No.: ${d.getString("rollNo") ?: "-"}\nClass: ${d.getString("className") ?: "-"}\nExam: ${d.getString("examName") ?: "-"}\nSession: ${d.getString("session") ?: "-"}\nMarks: ${d.getLong("totalObtained") ?: 0} / ${d.getLong("totalMax") ?: 0}\nPercentage: ${String.format("%.2f", d.getDouble("percentage") ?: 0.0)}%\nResult: ${d.getString("result") ?: "-"}"
-        }.addOnFailureListener { progress.visibility=android.view.View.GONE; result.text="Verification failed: ${it.message}" }
+            val badge=if(d["status"]=="revoked")"REVOKED RECORD" else if(d["issuerApproved"]==true)"REGISTERED SCHOOL RECORD" else "PRACTICE RECORD"
+            result.text="$badge\n\nID: ${d["verificationId"]}\nSchool: ${d["schoolName"]}\nClass: ${d["className"]}\nExam: ${d["examName"]}\nSession: ${d["session"]}\nMarks: ${d["totalObtained"]}/${d["totalMax"]}\nPercentage: %.2f%%\nResult: ${d["result"]}".format((d["percentage"] as? Number)?.toDouble()?:0.0)
+        },{progress.visibility=android.view.View.GONE;result.text=it})
     }
 }

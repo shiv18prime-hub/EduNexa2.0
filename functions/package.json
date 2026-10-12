@@ -1,0 +1,5 @@
+{
+  "name": "edunexa-backend", "private": true, "main": "index.js", "engines": {"node": "22"},
+  "scripts": {"test": "node --test test/*.test.cjs", "check": "node --check index.js && node --check lib/services.cjs"},
+  "dependencies": {"firebase-admin": "^13.0.0", "firebase-functions": "^6.0.0"}
+}

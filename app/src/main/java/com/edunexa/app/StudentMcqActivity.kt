@@ -1,138 +1,23 @@
 package com.edunexa.app
-
-import android.graphics.Color
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
+import com.edunexa.app.data.Backend
 import com.edunexa.app.data.McqRepository
-import com.google.android.material.card.MaterialCardView
+import org.json.JSONObject
 
-class StudentMcqActivity : AppCompatActivity() {
-    private val repo = McqRepository()
-    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(18), dp(18), dp(18))
-        }
-        setContentView(ScrollView(this).apply { addView(root) })
-        root.addView(TextView(this).apply {
-            text = "MCQ Tests"
-            textSize = 27f
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
-        })
-        val status = TextView(this).apply {
-            text = "Loading tests…"
-            setPadding(0, dp(8), 0, dp(14))
-        }
-        root.addView(status)
-        repo.studentTests({ tests ->
-            status.text = if (tests.isEmpty()) "No active tests from your school" else "${tests.size} active test(s)"
-            tests.forEach { (testId, testData) -> addTest(root, testId, testData) }
-        }, { status.text = it })
+class StudentMcqActivity:EduActivity(){
+    private val repo=McqRepository();private lateinit var root:LinearLayout;private lateinit var status:TextView;private var timer:CountDownTimer?=null;private var sessionId:String?=null;private var deadline=0L;private var testTitle="";private var questions:List<Map<String,Any>> = emptyList();private val answers=mutableMapOf<String,Int>();private var submitting=false
+    override fun onCreate(state:Bundle?){super.onCreate(state);root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(28,24,28,28)};setContentView(ScrollView(this).apply{addView(root)});root.addView(TextView(this).apply{text="School Tests";textSize=27f;setTypeface(typeface,android.graphics.Typeface.BOLD)});status=TextView(this);root.addView(status)
+        sessionId=state?.getString("session");deadline=state?.getLong("deadline")?:0;testTitle=state?.getString("title")?:"";state?.getString("answers")?.let{runCatching{val o=JSONObject(it);o.keys().forEach{k->answers[k]=o.getInt(k)}}};if(sessionId!=null){questions=Backend.rows(state?.getString("questions")?.let{org.json.JSONArray(it).let{a->(0 until a.length()).map{i->val o=a.getJSONObject(i);o.keys().asSequence().associateWith{k->o.get(k).let{v->if(v is org.json.JSONArray)(0 until v.length()).map{j->v.getString(j)} else v}}}}});showSession()}else loadTests()
     }
-
-    private fun addTest(root: LinearLayout, testId: String, testData: Map<String, Any>) {
-        val card = MaterialCardView(this).apply {
-            radius = dp(18).toFloat()
-            cardElevation = dp(3).toFloat()
-            setCardBackgroundColor(Color.WHITE)
-            setContentPadding(dp(16), dp(16), dp(16), dp(16))
-        }
-        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        box.addView(TextView(this).apply {
-            text = "${testData["title"]}\n${testData["subject"]} • ${testData["chapter"]}"
-            textSize = 18f
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
-        })
-        val timerText = TextView(this).apply {
-            textSize = 16f
-            setPadding(0, dp(8), 0, dp(8))
-        }
-        box.addView(timerText)
-        val questions = testData["questions"] as? List<*> ?: emptyList<Any>()
-        val groups = mutableListOf<RadioGroup>()
-        questions.forEachIndexed { questionIndex, item ->
-            val question = item as? Map<*, *> ?: return@forEachIndexed
-            box.addView(TextView(this).apply {
-                text = "${questionIndex + 1}. ${question["question"]}"
-                textSize = 16f
-                setPadding(0, dp(10), 0, dp(4))
-            })
-            val group = RadioGroup(this)
-            (question["options"] as? List<*>)?.forEachIndexed { optionIndex, option ->
-                group.addView(RadioButton(this).apply {
-                    text = option.toString()
-                    this.id = (questionIndex + 1) * 100 + optionIndex
-                })
-            }
-            groups.add(group)
-            box.addView(group)
-        }
-        val submit = Button(this).apply {
-            text = "Submit Test"
-            isAllCaps = false
-        }
-        box.addView(submit)
-        val review = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        box.addView(review)
-        var submitted = false
-
-        fun finishTest(auto: Boolean) {
-            if (submitted) return
-            submitted = true
-            var score = 0
-            val answers = mutableMapOf<String, Int>()
-            questions.forEachIndexed { questionIndex, item ->
-                val question = item as? Map<*, *> ?: return@forEachIndexed
-                val selected = groups.getOrNull(questionIndex)?.checkedRadioButtonId?.let { checkedId ->
-                    if (checkedId == -1) -1 else checkedId - (questionIndex + 1) * 100
-                } ?: -1
-                answers[questionIndex.toString()] = selected
-                val correct = (question["correctIndex"] as? Number)?.toInt() ?: -2
-                if (selected == correct) score++
-                val options = question["options"] as? List<*>
-                val selectedText = if (selected >= 0) options?.getOrNull(selected)?.toString() ?: "-" else "Not answered"
-                val correctText = if (correct >= 0) options?.getOrNull(correct)?.toString() ?: "-" else "-"
-                val explanation = question["explanation"]?.toString()?.trim().orEmpty()
-                review.addView(TextView(this).apply {
-                    text = "\nQ${questionIndex + 1}: ${if (selected == correct) "✓ Correct" else "✗ Wrong"}\nYour answer: $selectedText\nCorrect answer: $correctText${if (explanation.isNotBlank()) "\nExplanation: $explanation" else ""}"
-                    textSize = 15f
-                })
-            }
-            groups.forEach { group ->
-                for (i in 0 until group.childCount) group.getChildAt(i).isEnabled = false
-            }
-            submit.isEnabled = false
-            val percentage = if (questions.isNotEmpty()) score * 100.0 / questions.size else 0.0
-            review.addView(TextView(this).apply {
-                text = "\nResult: $score/${questions.size} • %.1f%%".format(percentage)
-                textSize = 20f
-                setTypeface(typeface, android.graphics.Typeface.BOLD)
-            })
-            repo.submit(testId, answers, score, questions.size) { ok, message ->
-                Toast.makeText(this, if (ok) "${if (auto) "Time up • " else ""}$message" else message, Toast.LENGTH_LONG).show()
-            }
-        }
-
-        submit.setOnClickListener { finishTest(false) }
-        val minutes = (testData["durationMinutes"] as? Number)?.toLong()?.coerceAtLeast(1) ?: 10L
-        object : CountDownTimer(minutes * 60000, 1000) {
-            override fun onTick(ms: Long) {
-                val seconds = ms / 1000
-                timerText.text = "Time left: %02d:%02d".format(seconds / 60, seconds % 60)
-            }
-            override fun onFinish() {
-                timerText.text = "Time up"
-                finishTest(true)
-            }
-        }.start()
-        card.addView(box)
-        val lp = LinearLayout.LayoutParams(-1, -2)
-        lp.setMargins(0, 0, 0, dp(12))
-        root.addView(card, lp)
+    private fun loadTests(){status.text="Loading tests…";repo.studentTests({tests->status.text=if(tests.isEmpty())"No active tests from your school" else "${tests.size} test(s) available";tests.forEach{(id,t)->root.addView(Button(this).apply{text="${t["title"]}\n${t["questionCount"]} questions • ${t["durationMinutes"]} minutes";isAllCaps=false;setOnClickListener{isEnabled=false;repo.start(id,{r->sessionId=r["sessionId"].toString();deadline=(r["deadline"] as Number).toLong();testTitle=r["title"].toString();questions=Backend.rows(r["questions"]);answers.clear();showSession()},{error->isEnabled=true;status.text=error})}})}},{status.text=it})}
+    private fun showSession(){timer?.cancel();while(root.childCount>2)root.removeViewAt(2);status.text=testTitle;val time=TextView(this).apply{textSize=18f};root.addView(time)
+        val controls=mutableListOf<RadioGroup>();questions.forEachIndexed{i,q->root.addView(TextView(this).apply{text="${i+1}. ${q["question"]}";textSize=17f;setPadding(0,18,0,4)});val group=RadioGroup(this);(q["options"] as? List<*>)?.forEachIndexed{j,o->group.addView(RadioButton(this).apply{id=android.view.View.generateViewId();text=o.toString();tag=j;isChecked=answers[i.toString()]==j})};group.setOnCheckedChangeListener{g,id->if(id!=-1)answers[i.toString()]=g.findViewById<RadioButton>(id).tag as Int};controls.add(group);root.addView(group)}
+        val submit=Button(this).apply{text="Submit Test"};root.addView(submit);val output=TextView(this).apply{textSize=20f};root.addView(output)
+        fun send(){if(submitting)return;val sid=sessionId?:return;submitting=true;submit.isEnabled=false;repo.submit(sid,answers.toMap(),{r->timer?.cancel();controls.forEach{g->for(i in 0 until g.childCount)g.getChildAt(i).isEnabled=false};val score=r["result"] as? Map<*,*>;output.text="Score: ${score?.get("score")}/${score?.get("total")} • %.1f%%".format((score?.get("percentage") as? Number)?.toDouble()?:0.0);status.text="Submitted";sessionId=null;submitting=false},{error->submitting=false;submit.isEnabled=true;status.text=error})}
+        submit.setOnClickListener{send()};val remaining=(deadline-System.currentTimeMillis()).coerceAtLeast(0);timer=object:CountDownTimer(remaining,1000){override fun onTick(ms:Long){time.text="Time left: %02d:%02d".format(ms/60000,ms/1000%60)};override fun onFinish(){time.text="Time up";send()}}.start()
     }
+    override fun onSaveInstanceState(out:Bundle){out.putString("session",sessionId);out.putLong("deadline",deadline);out.putString("title",testTitle);out.putString("questions",org.json.JSONArray(questions.map{JSONObject(it)}).toString());out.putString("answers",JSONObject(answers as Map<*,*>).toString());super.onSaveInstanceState(out)}
+    override fun onDestroy(){timer?.cancel();super.onDestroy()}
 }

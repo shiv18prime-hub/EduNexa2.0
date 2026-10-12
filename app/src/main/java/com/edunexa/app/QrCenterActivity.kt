@@ -15,7 +15,7 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 
-class QrCenterActivity : AppCompatActivity() {
+class QrCenterActivity : EduActivity() {
     private val db = FirebaseFirestore.getInstance(); private val auth = FirebaseAuth.getInstance()
     private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
     override fun onCreate(b: Bundle?) {

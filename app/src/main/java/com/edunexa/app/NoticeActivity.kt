@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.edunexa.app.data.NoticeRepository
 import com.google.android.material.card.MaterialCardView
 
-class NoticeActivity : AppCompatActivity() {
+class NoticeActivity : EduActivity() {
     private val repo=NoticeRepository()
     private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
     override fun onCreate(savedInstanceState: Bundle?) {

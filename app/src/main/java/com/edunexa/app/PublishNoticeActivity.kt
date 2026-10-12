@@ -6,7 +6,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.edunexa.app.data.NoticeRepository
 
-class PublishNoticeActivity : AppCompatActivity() {
+class PublishNoticeActivity : EduActivity() {
     private val repo=NoticeRepository()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState); setContentView(R.layout.activity_publish_notice)

@@ -6,7 +6,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.edunexa.app.data.SchoolResultRepository
 
-class PublishResultActivity : AppCompatActivity() {
+class PublishResultActivity : EduActivity() {
     private val repo = SchoolResultRepository()
     private lateinit var root: LinearLayout
     private lateinit var status: TextView

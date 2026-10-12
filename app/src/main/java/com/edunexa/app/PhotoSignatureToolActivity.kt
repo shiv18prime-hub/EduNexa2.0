@@ -14,7 +14,7 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
-class PhotoSignatureToolActivity : AppCompatActivity() {
+class PhotoSignatureToolActivity : EduActivity() {
     private lateinit var w: EditText
     private lateinit var h: EditText
     private lateinit var status: TextView

@@ -13,7 +13,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : EduActivity() {
     private lateinit var content: FrameLayout
     private lateinit var homeBtn: Button
     private lateinit var toolsBtn: Button
@@ -24,15 +24,8 @@ class MainActivity : AppCompatActivity() {
     private var profileImage: ImageView? = null
 
     private val photoPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-        uri?.let {
-            try { contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Exception) {}
-            getSharedPreferences("edunexa", MODE_PRIVATE).edit().putString("profilePhoto", it.toString()).apply()
-            profileImage?.setImageURI(it)
-            auth.currentUser?.uid?.let { uid ->
-                db.collection("users").document(uid).update("profilePhotoUri", it.toString())
-                    .addOnSuccessListener { Toast.makeText(this, "Profile photo updated", Toast.LENGTH_SHORT).show() }
-                    .addOnFailureListener { Toast.makeText(this, "Photo saved on this phone", Toast.LENGTH_SHORT).show() }
-            }
+        if(uri!=null){ Toast.makeText(this,"Uploading profile photo…",Toast.LENGTH_SHORT).show()
+            com.edunexa.app.data.ProfilePhotos.upload(this,uri,{url->profileImage?.let{com.edunexa.app.data.ProfilePhotos.load(it,url)};Toast.makeText(this,"Photo saved and synced",Toast.LENGTH_SHORT).show()},{error->Toast.makeText(this,error,Toast.LENGTH_LONG).show()})
         }
     }
 
@@ -47,7 +40,7 @@ class MainActivity : AppCompatActivity() {
         content = findViewById(R.id.content); homeBtn = findViewById(R.id.homeBtn); toolsBtn = findViewById(R.id.toolsBtn); connectBtn = findViewById(R.id.connectBtn); profileBtn = findViewById(R.id.profileBtn)
         homeBtn.setOnClickListener { showHome() }; toolsBtn.setOnClickListener { startActivity(Intent(this, ToolsActivity::class.java)) }
         connectBtn.setOnClickListener { startActivity(Intent(this, JoinSchoolActivity::class.java)) }; profileBtn.setOnClickListener { showProfile() }
-        showHome()
+        if(intent.getBooleanExtra("profileOnly",false))showProfile() else showHome()
     }
 
     private fun selectTab(tab: String) {
@@ -89,13 +82,18 @@ class MainActivity : AppCompatActivity() {
         resultCard.setOnClickListener { startActivity(Intent(this, StudentResultsActivity::class.java)) }; attendanceCard.setOnClickListener { startActivity(Intent(this, StudentAttendanceActivity::class.java)) }; root.addView(stats, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(16)) })
         root.addView(sectionTitle("Quick Actions")); action(root, "🧮", "Result Calculator", "Calculate percentage, grade and result") { startActivity(Intent(this, ResultCalculatorActivity::class.java)) }; action(root, "📝", "MCQ Tests", "Take tests assigned by your school") { startActivity(Intent(this, StudentMcqActivity::class.java)) }; action(root, "📊", "School Results", "View results published by your school") { startActivity(Intent(this, StudentResultsActivity::class.java)) }; action(root, "📅", "My Attendance", "Check your attendance record") { startActivity(Intent(this, StudentAttendanceActivity::class.java)) }
         root.addView(sectionTitle("School & Updates")); action(root, "📢", "Notices", "School announcements and important updates") { startActivity(Intent(this, NoticeActivity::class.java)) }; action(root, "🏫", "Connect School", "Connect securely with your school") { startActivity(Intent(this, JoinSchoolActivity::class.java)) }
+        action(root, "💬", "School Messages", "Talk with teachers and school members") { startActivity(Intent(this, ChatActivity::class.java)) }
+        action(root,"⭐","EduNexa Pro","Membership and coupons") { startActivity(Intent(this, MembershipActivity::class.java)) }
         root.addView(sectionTitle("Smart Tools")); action(root, "🛠", "EduNexa Tools", "Image, PDF, marksheet and utility tools") { startActivity(Intent(this, ToolsActivity::class.java)) }
         auth.currentUser?.uid?.let { uid -> db.collection("users").document(uid).get().addOnSuccessListener { d ->
             name.text = d.getString("name") ?: auth.currentUser?.displayName ?: "Student"; val className = d.getString("className"); val schoolName = d.getString("schoolName")
             identity.text = listOfNotNull(className?.takeIf { it.isNotBlank() }?.let { "Class $it" }, schoolName?.takeIf { it.isNotBlank() }).joinToString(" • ").ifBlank { "Your personalized learning dashboard" }
             status.text = if (!schoolName.isNullOrBlank()) "●  Connected to $schoolName" else "○  School not connected • Tap Connect School"; status.setTextColor(Color.parseColor(if (!schoolName.isNullOrBlank()) "#157347" else "#B45309"))
-            val percentage = d.getDouble("latestPercentage") ?: d.getLong("latestPercentage")?.toDouble(); resultValue.text = percentage?.let { "${String.format("%.1f", it)}%" } ?: "View"
-            val attendance = d.getDouble("attendancePercentage") ?: d.getLong("attendancePercentage")?.toDouble(); attendanceValue.text = attendance?.let { "${String.format("%.0f", it)}%" } ?: "View"
+            com.edunexa.app.data.Backend.call("dashboard",success={stats->
+                resultValue.text=(stats["latestPercentage"] as? Number)?.toDouble()?.let{"%.1f%%".format(it)}?:"—"
+                attendanceValue.text=(stats["attendancePercentage"] as? Number)?.toDouble()?.let{"%.0f%%".format(it)}?:"—"
+                status.text=if(stats["schoolJoinStatus"]=="connected")"● Connected to ${stats["schoolName"]}" else if(stats["schoolJoinStatus"]=="pending")"● School connection pending" else "○ School not connected"
+            },failure={resultValue.text="View";attendanceValue.text="View"})
         }.addOnFailureListener { status.text = "Offline • Some dashboard data may be unavailable"; status.setTextColor(Color.parseColor("#B45309")); resultValue.text = "View"; attendanceValue.text = "View" } }
         content.addView(ScrollView(this).apply { addView(root) })
     }
@@ -125,17 +123,17 @@ class MainActivity : AppCompatActivity() {
         val profileCard = card(); val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL }
         box.addView(TextView(this).apply { text = "My Profile"; textSize = 24f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#171A2B")) })
         profileImage = ImageView(this).apply { setImageResource(R.drawable.edunexa_logo); scaleType = ImageView.ScaleType.CENTER_CROP }; box.addView(profileImage, LinearLayout.LayoutParams(dp(112), dp(112)).apply { setMargins(0, dp(18), 0, dp(8)) })
-        val localPhoto = getSharedPreferences("edunexa", MODE_PRIVATE).getString("profilePhoto", null); localPhoto?.let { runCatching { profileImage?.setImageURI(Uri.parse(it)) } }
+
         box.addView(Button(this).apply { text = "Change Profile Photo"; isAllCaps = false; setOnClickListener { photoPicker.launch(arrayOf("image/*")) } })
         val info = TextView(this).apply { text = "Loading account…"; textSize = 16f; gravity = Gravity.CENTER; setTextColor(Color.parseColor("#454B60")); setPadding(0, dp(18), 0, dp(8)) }; box.addView(info)
-        box.addView(TextView(this).apply { text = "Student Account"; textSize = 13f; setTextColor(Color.parseColor("#4338CA")); setBackgroundColor(Color.parseColor("#EEF0FF")); setPadding(dp(14), dp(7), dp(14), dp(7)) })
+        box.addView(TextView(this).apply { text = "Account Profile"; textSize = 13f; setTextColor(Color.parseColor("#4338CA")); setBackgroundColor(Color.parseColor("#EEF0FF")); setPadding(dp(14), dp(7), dp(14), dp(7)) })
         val editBtn = Button(this).apply { text = "✏️  Edit Profile"; isAllCaps = false; isEnabled = false }; box.addView(editBtn, LinearLayout.LayoutParams(-1, dp(54)).apply { setMargins(0, dp(16), 0, 0) })
         profileCard.addView(box); root.addView(profileCard, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(14)) })
         auth.currentUser?.uid?.let { uid -> db.collection("users").document(uid).get().addOnSuccessListener { d ->
             val displayName = d.getString("name") ?: "Student"; val email = d.getString("email") ?: auth.currentUser?.email.orEmpty(); val cls = d.getString("className") ?: "—"; val school = d.getString("schoolName"); val phone = d.getString("phone").orEmpty(); val dob = d.getString("dateOfBirth").orEmpty(); val gender = d.getString("gender").orEmpty()
             val extra = listOfNotNull(phone.takeIf { it.isNotBlank() }?.let { "Phone: $it" }, dob.takeIf { it.isNotBlank() }?.let { "DOB: $it" }, gender.takeIf { it.isNotBlank() }?.let { "Gender: $it" }).joinToString("\n")
             info.text = "$displayName\n$email\nClass: $cls${school?.let { "\n$it" } ?: ""}${if (extra.isNotBlank()) "\n$extra" else ""}"
-            if (localPhoto == null) d.getString("profilePhotoUri")?.let { runCatching { profileImage?.setImageURI(Uri.parse(it)) } }
+            d.getString("profilePhotoUrl")?.let { url -> profileImage?.let { com.edunexa.app.data.ProfilePhotos.load(it,url) } }
             editBtn.isEnabled = true; editBtn.setOnClickListener { editProfile(uid, displayName, if (cls == "—") "" else cls, phone, dob, gender) }
         }.addOnFailureListener { info.text = "Account details unavailable\nCheck your internet connection." } }
         action(root, "🏆", "MCQ History", "Completed tests and scores") { startActivity(Intent(this, McqHistoryActivity::class.java)) }; action(root, "🛠", "EduNexa Tools", "Open all student utility tools") { startActivity(Intent(this, ToolsActivity::class.java)) }

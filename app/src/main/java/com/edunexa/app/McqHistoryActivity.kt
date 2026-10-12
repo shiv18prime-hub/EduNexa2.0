@@ -7,7 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.edunexa.app.data.McqRepository
 import com.google.android.material.card.MaterialCardView
 
-class McqHistoryActivity : AppCompatActivity() {
+class McqHistoryActivity : EduActivity() {
     private val repo = McqRepository()
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 

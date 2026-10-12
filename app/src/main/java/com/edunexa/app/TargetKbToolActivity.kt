@@ -15,7 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import java.io.ByteArrayOutputStream
 import kotlin.math.sqrt
 
-class TargetKbToolActivity : AppCompatActivity() {
+class TargetKbToolActivity : EduActivity() {
     private lateinit var size: EditText
     private lateinit var status: TextView
     private lateinit var preview: ImageView
