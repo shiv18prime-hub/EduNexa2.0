@@ -22,7 +22,7 @@ class StudentMcqActivity : AppCompatActivity() {
         root.addView(TextView(this).apply {
             text = "MCQ Tests"
             textSize = 27f
-            setTypeface(typeface, 1)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
         })
         val status = TextView(this).apply {
             text = "Loading tests…"
@@ -46,7 +46,7 @@ class StudentMcqActivity : AppCompatActivity() {
         box.addView(TextView(this).apply {
             text = "${testData["title"]}\n${testData["subject"]} • ${testData["chapter"]}"
             textSize = 18f
-            setTypeface(typeface, 1)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
         })
         val timerText = TextView(this).apply {
             textSize = 16f
@@ -111,7 +111,7 @@ class StudentMcqActivity : AppCompatActivity() {
             review.addView(TextView(this).apply {
                 text = "\nResult: $score/${questions.size} • %.1f%%".format(percentage)
                 textSize = 20f
-                setTypeface(typeface, 1)
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
             })
             repo.submit(testId, answers, score, questions.size) { ok, message ->
                 Toast.makeText(this, if (ok) "${if (auto) "Time up • " else ""}$message" else message, Toast.LENGTH_LONG).show()

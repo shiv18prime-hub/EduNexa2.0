@@ -21,7 +21,7 @@ class PublishResultActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(28))}
         setContentView(ScrollView(this).apply{addView(root)})
-        root.addView(TextView(this).apply{text="Result Management";textSize=27f;setTypeface(typeface,1)})
+        root.addView(TextView(this).apply{text="Result Management";textSize=27f;setTypeface(typeface, android.graphics.Typeface.BOLD)})
         root.addView(TextView(this).apply{text="Publish individual subject results and manage published records.";setPadding(0,dp(5),0,dp(12))})
         student=Spinner(this); exam=EditText(this).apply{hint="Exam / Term"}; subject=EditText(this).apply{hint="Subject"}
         obtained=EditText(this).apply{hint="Obtained marks";inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL}
@@ -37,7 +37,7 @@ class PublishResultActivity : AppCompatActivity() {
     private fun publish(){val item=student.selectedItem as? StudentItem?:return;val a=obtained.text.toString().toDoubleOrNull()?:-1.0;val b=total.text.toString().toDoubleOrNull()?:0.0;if(exam.text.isBlank()||subject.text.isBlank()||a<0||b<=0||a>b){status.text="Enter valid exam, subject and marks";return};repo.publish(item.id,item.name,exam.text.toString(),subject.text.toString(),a,b){ok,m->status.text=m;if(ok){subject.text.clear();obtained.text.clear();total.text.clear();loadPublished()}}}
     private fun loadPublished(){repo.schoolResults({rows->
         while(root.childCount>10)root.removeViewAt(10)
-        root.addView(TextView(this).apply{text="Published Results (${rows.size})";textSize=20f;setTypeface(typeface,1)})
+        root.addView(TextView(this).apply{text="Published Results (${rows.size})";textSize=20f;setTypeface(typeface, android.graphics.Typeface.BOLD)})
         rows.forEach{r->val id=r["id"].toString();val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(10),dp(10),dp(10),dp(10))};box.addView(TextView(this).apply{text="${r["studentName"]} • ${r["exam"]}\n${r["subject"]}: ${r["obtained"]}/${r["total"]} • ${"%.1f".format((r["percentage"] as? Number)?.toDouble()?:0.0)}%"});box.addView(Button(this).apply{text="Unpublish / Remove";isAllCaps=false;setOnClickListener{repo.deleteResult(id){_,m->Toast.makeText(this@PublishResultActivity,m,Toast.LENGTH_SHORT).show();loadPublished()}}});root.addView(box)}
     },{status.text=it})}
     data class StudentItem(val id:String,val name:String){override fun toString()=name}

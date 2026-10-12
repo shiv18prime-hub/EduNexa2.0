@@ -57,13 +57,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun sectionTitle(text: String) = TextView(this).apply { this.text = text; textSize = 19f; setTypeface(typeface, 1); setTextColor(Color.parseColor("#171A2B")); setPadding(dp(3), dp(5), 0, dp(10)) }
+    private fun sectionTitle(text: String) = TextView(this).apply { this.text = text; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#171A2B")); setPadding(dp(3), dp(5), 0, dp(10)) }
 
     private fun action(root: LinearLayout, icon: String, title: String, subtitle: String, go: () -> Unit) {
         val c = card(); val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
         row.addView(TextView(this).apply { text = icon; textSize = 25f; gravity = Gravity.CENTER }, LinearLayout.LayoutParams(dp(48), dp(48)))
         val textBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), 0, dp(8), 0) }
-        textBox.addView(TextView(this).apply { text = title; textSize = 17f; setTextColor(Color.parseColor("#171A2B")); setTypeface(typeface, 1) })
+        textBox.addView(TextView(this).apply { text = title; textSize = 17f; setTextColor(Color.parseColor("#171A2B")); setTypeface(typeface, android.graphics.Typeface.BOLD) })
         textBox.addView(TextView(this).apply { text = subtitle; textSize = 13f; setTextColor(Color.parseColor("#747B91")); setPadding(0, dp(3), 0, 0) })
         row.addView(textBox, LinearLayout.LayoutParams(0, -2, 1f)); row.addView(TextView(this).apply { text = "›"; textSize = 28f; setTextColor(Color.parseColor("#7C73E6")) })
         c.addView(row); c.setOnClickListener { go() }; root.addView(c, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(11)) })
@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun statCard(title: String, initial: String): Pair<MaterialCardView, TextView> {
         val c = card(18); val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
-        val value = TextView(this).apply { text = initial; textSize = 21f; setTypeface(typeface, 1); setTextColor(Color.parseColor("#4338CA")); gravity = Gravity.CENTER }
+        val value = TextView(this).apply { text = initial; textSize = 21f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#4338CA")); gravity = Gravity.CENTER }
         box.addView(value); box.addView(TextView(this).apply { text = title; textSize = 12f; setTextColor(Color.parseColor("#747B91")); gravity = Gravity.CENTER; setPadding(0, dp(4), 0, 0) }); c.addView(box)
         return c to value
     }
@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
         selectTab("home"); content.removeAllViews(); val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(3), dp(2), dp(3), dp(28)) }
         val hero = card(24).apply { setCardBackgroundColor(Color.parseColor("#F7F7FF")); strokeColor = Color.parseColor("#DDDDFB") }; val heroBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val hello = TextView(this).apply { text = "Good to see you 👋"; textSize = 14f; setTextColor(Color.parseColor("#6B7280")) }
-        val name = TextView(this).apply { text = "Student"; textSize = 27f; setTypeface(typeface, 1); setTextColor(Color.parseColor("#171A2B")); setPadding(0, dp(2), 0, 0) }
+        val name = TextView(this).apply { text = "Student"; textSize = 27f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#171A2B")); setPadding(0, dp(2), 0, 0) }
         val identity = TextView(this).apply { text = "Your personalized learning dashboard"; textSize = 13f; setTextColor(Color.parseColor("#666D82")); setPadding(0, dp(5), 0, dp(12)) }
         val status = TextView(this).apply { text = "●  Loading account status"; textSize = 13f; setTextColor(Color.parseColor("#4338CA")); setPadding(dp(12), dp(8), dp(12), dp(8)); setBackgroundColor(Color.parseColor("#ECECFF")) }
         heroBox.addView(hello); heroBox.addView(name); heroBox.addView(identity); heroBox.addView(status); hero.addView(heroBox); root.addView(hero, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(15)) })
@@ -123,7 +123,7 @@ class MainActivity : AppCompatActivity() {
     private fun showProfile() {
         selectTab("profile"); content.removeAllViews(); val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(dp(4), dp(4), dp(4), dp(28)) }
         val profileCard = card(); val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL }
-        box.addView(TextView(this).apply { text = "My Profile"; textSize = 24f; setTypeface(typeface, 1); setTextColor(Color.parseColor("#171A2B")) })
+        box.addView(TextView(this).apply { text = "My Profile"; textSize = 24f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#171A2B")) })
         profileImage = ImageView(this).apply { setImageResource(R.drawable.edunexa_logo); scaleType = ImageView.ScaleType.CENTER_CROP }; box.addView(profileImage, LinearLayout.LayoutParams(dp(112), dp(112)).apply { setMargins(0, dp(18), 0, dp(8)) })
         val localPhoto = getSharedPreferences("edunexa", MODE_PRIVATE).getString("profilePhoto", null); localPhoto?.let { runCatching { profileImage?.setImageURI(Uri.parse(it)) } }
         box.addView(Button(this).apply { text = "Change Profile Photo"; isAllCaps = false; setOnClickListener { photoPicker.launch(arrayOf("image/*")) } })

@@ -15,7 +15,7 @@ class VerifyMarksheetActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(36,36,36,36) }
-        root.addView(TextView(this).apply { text="Verify Marksheet"; textSize=28f; setTypeface(typeface,1) })
+        root.addView(TextView(this).apply { text="Verify Marksheet"; textSize=28f; setTypeface(typeface, android.graphics.Typeface.BOLD) })
         root.addView(TextView(this).apply { text="Enter the EduNexa Verification ID printed beside the QR code."; setPadding(0,8,0,20) })
         idInput = EditText(this).apply { hint="Example: EDX-AB12CD34"; isSingleLine=true }
         root.addView(idInput)

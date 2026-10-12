@@ -21,7 +21,7 @@ class QrCenterActivity : AppCompatActivity() {
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
         val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER_HORIZONTAL;setPadding(dp(20),dp(24),dp(20),dp(24));setBackgroundColor(Color.parseColor("#F6F7FC"))}
-        root.addView(TextView(this).apply{text="EduNexa QR Center";textSize=27f;setTypeface(typeface,1);setTextColor(Color.parseColor("#20243A"))})
+        root.addView(TextView(this).apply{text="EduNexa QR Center";textSize=27f;setTypeface(typeface, android.graphics.Typeface.BOLD);setTextColor(Color.parseColor("#20243A"))})
         val status=TextView(this).apply{text="Loading account…";gravity=Gravity.CENTER;setPadding(0,dp(8),0,dp(12));setTextColor(Color.parseColor("#626A80"))};root.addView(status)
         val image=ImageView(this).apply{adjustViewBounds=true};root.addView(image,LinearLayout.LayoutParams(dp(270),dp(270)))
         val generate=Button(this).apply{text="Generate My Verified QR";isAllCaps=false};root.addView(generate,LinearLayout.LayoutParams(-1,dp(56)).apply{setMargins(0,dp(14),0,0)})

@@ -20,7 +20,7 @@ class StudentManagementActivity : AppCompatActivity() {
         super.onCreate(b)
         root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(18), dp(18), dp(18), dp(18)) }
         setContentView(ScrollView(this).apply { addView(root) })
-        root.addView(TextView(this).apply { text = "Student Management"; textSize = 27f; setTypeface(typeface, 1) })
+        root.addView(TextView(this).apply { text = "Student Management"; textSize = 27f; setTypeface(typeface, android.graphics.Typeface.BOLD) })
         status = TextView(this).apply { text = "Loading students and requests…"; setPadding(0, dp(8), 0, dp(14)) }; root.addView(status)
         load()
     }
@@ -28,7 +28,7 @@ class StudentManagementActivity : AppCompatActivity() {
     private fun card(title: String, body: String, buttons: List<Pair<String, () -> Unit>> = emptyList()) {
         val c = MaterialCardView(this).apply { radius = dp(18).toFloat(); cardElevation = dp(2).toFloat(); setCardBackgroundColor(Color.WHITE); setContentPadding(dp(16), dp(16), dp(16), dp(16)) }
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        box.addView(TextView(this).apply { text = title; textSize = 17f; setTypeface(typeface, 1); setTextColor(Color.parseColor("#20243A")) })
+        box.addView(TextView(this).apply { text = title; textSize = 17f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#20243A")) })
         box.addView(TextView(this).apply { text = body; textSize = 14f; setTextColor(Color.parseColor("#646B80")); setPadding(0, dp(5), 0, if (buttons.isEmpty()) 0 else dp(8)) })
         buttons.forEach { (label, action) -> box.addView(Button(this).apply { text = label; isAllCaps = false; setOnClickListener { isEnabled = false; action() } }, LinearLayout.LayoutParams(-1, dp(50)).apply { setMargins(0, dp(4), 0, 0) }) }
         c.addView(box); root.addView(c, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(10)) })
@@ -39,7 +39,7 @@ class StudentManagementActivity : AppCompatActivity() {
         while (root.childCount > 2) root.removeViewAt(2)
         status.text = "Loading students and requests…"
         db.collection("schoolJoinRequests").whereEqualTo("schoolId", sid).whereEqualTo("status", "pending").get().addOnSuccessListener { requests ->
-            if (!requests.isEmpty) root.addView(TextView(this).apply { text = "Pending Requests (${requests.size()})"; textSize = 19f; setTypeface(typeface, 1); setPadding(0, dp(5), 0, dp(8)) }, 2)
+            if (!requests.isEmpty) root.addView(TextView(this).apply { text = "Pending Requests (${requests.size()})"; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(5), 0, dp(8)) }, 2)
             requests.documents.forEach { r ->
                 val studentId = r.getString("studentId").orEmpty(); val code = r.getString("schoolCode").orEmpty()
                 card(r.getString("studentName") ?: "Student", "${r.getString("studentEmail") ?: ""}\nClass: ${r.getString("className") ?: "—"}", listOf(
@@ -54,7 +54,7 @@ class StudentManagementActivity : AppCompatActivity() {
     private fun loadConnected(sid: String, pending: Int) {
         db.collection("users").whereEqualTo("role", "student").whereEqualTo("schoolId", sid).get().addOnSuccessListener { students ->
             status.text = "${students.size()} connected • $pending pending"
-            root.addView(TextView(this).apply { text = "Connected Students (${students.size()})"; textSize = 19f; setTypeface(typeface, 1); setPadding(0, dp(10), 0, dp(8)) })
+            root.addView(TextView(this).apply { text = "Connected Students (${students.size()})"; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(10), 0, dp(8)) })
             students.documents.forEach { d -> card(d.getString("name") ?: "Student", "${d.getString("email") ?: ""}\nClass: ${d.getString("className") ?: "Not set"}\nSchool Code: ${d.getString("schoolCode") ?: "—"}") }
         }.addOnFailureListener { status.text = it.message ?: "Could not load connected students" }
     }

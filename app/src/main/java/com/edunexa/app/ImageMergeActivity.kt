@@ -45,13 +45,13 @@ class ImageMergeActivity : AppCompatActivity() {
             setPadding(dp(18), dp(20), dp(18), dp(30))
             setBackgroundColor(Color.parseColor("#F6F7FC"))
         }
-        root.addView(TextView(this).apply { text = "Image Merge Studio"; textSize = 26f; setTypeface(typeface, 1); setTextColor(Color.parseColor("#17213D")) })
+        root.addView(TextView(this).apply { text = "Image Merge Studio"; textSize = 26f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#17213D")) })
         root.addView(TextView(this).apply { text = "Select • arrange layout • edit spacing • preview • save"; setTextColor(Color.parseColor("#72798F")); setPadding(0, dp(5), 0, dp(14)) })
         root.addView(Button(this).apply {
             text = "Select Images"; isAllCaps = false
             setOnClickListener { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply { type = "image/*"; addCategory(Intent.CATEGORY_OPENABLE); putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true) }, 301) }
         })
-        root.addView(TextView(this).apply { text = "EDIT LAYOUT"; setTypeface(typeface, 1); setTextColor(Color.parseColor("#3157D5")); setPadding(0, dp(16), 0, dp(6)) })
+        root.addView(TextView(this).apply { text = "EDIT LAYOUT"; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#3157D5")); setPadding(0, dp(16), 0, dp(6)) })
         layoutText = TextView(this).apply { text = "Grid: 2 columns • Gap: 8 px" }
         root.addView(layoutText)
         val controls = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
@@ -66,7 +66,7 @@ class ImageMergeActivity : AppCompatActivity() {
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {}
             })
         })
-        root.addView(TextView(this).apply { text = "LIVE PREVIEW"; setTypeface(typeface, 1); setTextColor(Color.parseColor("#3157D5")); setPadding(0, dp(12), 0, dp(6)) })
+        root.addView(TextView(this).apply { text = "LIVE PREVIEW"; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#3157D5")); setPadding(0, dp(12), 0, dp(6)) })
         preview = ImageView(this).apply { adjustViewBounds = true; scaleType = ImageView.ScaleType.FIT_CENTER; background = bg("#FFFFFF") }
         root.addView(preview, LinearLayout.LayoutParams(-1, dp(480)))
         save = Button(this).apply { text = "Save Merged Image"; isAllCaps = false; visibility = View.GONE; setOnClickListener { chooseSave() } }

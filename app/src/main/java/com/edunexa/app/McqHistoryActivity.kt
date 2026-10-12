@@ -21,7 +21,7 @@ class McqHistoryActivity : AppCompatActivity() {
         root.addView(TextView(this).apply {
             text = "Test History"
             textSize = 27f
-            setTypeface(typeface, 1)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
         })
         val status = TextView(this).apply {
             text = "Loading…"

@@ -35,7 +35,7 @@ class PdfToolkitActivity : AppCompatActivity() {
         super.onCreate(b)
         PDFBoxResourceLoader.init(applicationContext)
         val root = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(36,36,36,36) }
-        root.addView(TextView(this).apply { text="PDF Toolkit"; textSize=26f; setTypeface(typeface,1) })
+        root.addView(TextView(this).apply { text="PDF Toolkit"; textSize=26f; setTypeface(typeface, android.graphics.Typeface.BOLD) })
         root.addView(TextView(this).apply { text="Select → Process → Preview → Save\nNothing is saved permanently until you tap Save."; setPadding(0,10,0,22) })
         fun button(label:String, action:()->Unit)=Button(this).apply { text=label; isAllCaps=false; setOnClickListener{action()} }.also{root.addView(it)}
         button("Image → PDF") { startActivityForResult(Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI),71) }

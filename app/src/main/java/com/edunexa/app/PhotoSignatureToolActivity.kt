@@ -31,7 +31,7 @@ class PhotoSignatureToolActivity : AppCompatActivity() {
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(18),dp(20),dp(18),dp(30)); setBackgroundColor(Color.parseColor("#F6F7FC")) }
-        root.addView(TextView(this).apply { text="Photo & Signature Maker"; textSize=26f; setTypeface(typeface,1); setTextColor(Color.parseColor("#17213D")) })
+        root.addView(TextView(this).apply { text="Photo & Signature Maker"; textSize=26f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#17213D")) })
         root.addView(TextView(this).apply { text="Resize • rotate • preview • edit • save"; setTextColor(Color.parseColor("#72798F")); setPadding(0,dp(5),0,dp(14)) })
         val card=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(14),dp(10),dp(14),dp(14)); background=bg("#FFFFFF") }
         w=EditText(this).apply { hint="Width px (example 300)"; inputType=2 }
@@ -39,7 +39,7 @@ class PhotoSignatureToolActivity : AppCompatActivity() {
         card.addView(w); card.addView(h)
         card.addView(Button(this).apply { text="Choose Image"; isAllCaps=false; setOnClickListener { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply { type="image/*"; addCategory(Intent.CATEGORY_OPENABLE) },81) } })
         root.addView(card)
-        root.addView(TextView(this).apply { text="LIVE PREVIEW"; setTypeface(typeface,1); setTextColor(Color.parseColor("#3157D5")); setPadding(0,dp(18),0,dp(7)) })
+        root.addView(TextView(this).apply { text="LIVE PREVIEW"; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#3157D5")); setPadding(0,dp(18),0,dp(7)) })
         preview=ImageView(this).apply { adjustViewBounds=true; scaleType=ImageView.ScaleType.FIT_CENTER; background=bg("#FFFFFF") }
         root.addView(preview,LinearLayout.LayoutParams(-1,dp(390)))
         val edit=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }

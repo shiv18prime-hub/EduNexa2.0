@@ -31,14 +31,14 @@ class TargetKbToolActivity : AppCompatActivity() {
     override fun onCreate(b:Bundle?) {
         super.onCreate(b)
         val r=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(20),dp(18),dp(30));setBackgroundColor(Color.parseColor("#F6F7FC")) }
-        r.addView(TextView(this).apply { text="Target KB Compressor";textSize=26f;setTypeface(typeface,1);setTextColor(Color.parseColor("#17213D")) })
+        r.addView(TextView(this).apply { text="Target KB Compressor";textSize=26f;setTypeface(typeface, android.graphics.Typeface.BOLD);setTextColor(Color.parseColor("#17213D")) })
         r.addView(TextView(this).apply { text="Set target • preview • adjust quality • save";setTextColor(Color.parseColor("#72798F"));setPadding(0,dp(5),0,dp(14)) })
         val card=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(dp(14),dp(12),dp(14),dp(14));background=bg("#FFFFFF") }
         size=EditText(this).apply { hint="Target size KB: 20, 50, 100...";inputType=2 }
         card.addView(size)
         card.addView(Button(this).apply { text="Choose Image";isAllCaps=false;setOnClickListener { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply { type="image/*";addCategory(Intent.CATEGORY_OPENABLE) },91) } })
         r.addView(card)
-        r.addView(TextView(this).apply { text="LIVE PREVIEW";setTypeface(typeface,1);setTextColor(Color.parseColor("#3157D5"));setPadding(0,dp(18),0,dp(7)) })
+        r.addView(TextView(this).apply { text="LIVE PREVIEW";setTypeface(typeface, android.graphics.Typeface.BOLD);setTextColor(Color.parseColor("#3157D5"));setPadding(0,dp(18),0,dp(7)) })
         preview=ImageView(this).apply { adjustViewBounds=true;scaleType=ImageView.ScaleType.FIT_CENTER;background=bg("#FFFFFF") }
         r.addView(preview,LinearLayout.LayoutParams(-1,dp(390)))
         qualityText=TextView(this).apply { text="Max quality: 95%";setPadding(0,dp(10),0,0) };r.addView(qualityText)

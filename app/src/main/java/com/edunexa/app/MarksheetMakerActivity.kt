@@ -49,7 +49,7 @@ class MarksheetMakerActivity : AppCompatActivity() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(18), dp(20), dp(18), dp(30)); setBackgroundColor(Color.parseColor("#F6F7FC"))
         }
-        root.addView(TextView(this).apply { text = "Professional Marksheet Maker"; textSize = 26f; setTypeface(typeface, 1) })
+        root.addView(TextView(this).apply { text = "Professional Marksheet Maker"; textSize = 26f; setTypeface(typeface, android.graphics.Typeface.BOLD) })
         root.addView(TextView(this).apply { text = "Custom passing marks • grades • verified QR • live preview"; setPadding(0, dp(5), 0, dp(14)) })
         val form = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(10), dp(14), dp(14)); background = rounded("#FFFFFF", 18) }
         fun field(h: String) = EditText(this).apply {
@@ -58,7 +58,7 @@ class MarksheetMakerActivity : AppCompatActivity() {
         school = field("School Name"); address = field("School Address / Contact / Code"); student = field("Student Name"); roll = field("Roll / Admission No."); clazz = field("Class / Section"); exam = field("Exam Name"); session = field("Academic Session")
         form.addView(Button(this).apply { text = "Choose School Logo"; isAllCaps = false; setOnClickListener { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply { type = "image/*"; addCategory(Intent.CATEGORY_OPENABLE) }, 401) } })
         root.addView(form)
-        root.addView(TextView(this).apply { text = "SUBJECTS & MARKS"; setTypeface(typeface, 1); setPadding(0, dp(18), 0, dp(7)) })
+        root.addView(TextView(this).apply { text = "SUBJECTS & MARKS"; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(18), 0, dp(7)) })
         subjectBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }; root.addView(subjectBox)
         root.addView(Button(this).apply { text = "＋ Add Subject"; isAllCaps = false; setOnClickListener { addSubject() } })
         summary = TextView(this).apply { setPadding(dp(12), dp(12), dp(12), dp(12)); background = rounded("#FFFFFF", 12) }; root.addView(summary)
