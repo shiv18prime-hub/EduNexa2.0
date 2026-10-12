@@ -60,6 +60,16 @@ def run(command):
     return result.stdout
 
 
+def signer_fingerprints(output):
+    # SDK versions print either "Signer #1" or "Signer (minSdkVersion=...)".
+    # Only certificate hashes count; public-key and source-stamp hashes do not.
+    return re.findall(
+        r"^Signer[^\r\n]*? certificate SHA-1 digest:\s*([0-9a-fA-F:]+)\s*$",
+        output,
+        re.MULTILINE,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("apk", type=Path)
@@ -67,7 +77,9 @@ def main():
     args = parser.parse_args()
     tools = sdk_tools()
     verified = run([str(tools / "apksigner"), "verify", "--print-certs", str(args.apk)])
-    fingerprints = re.findall(r"Signer #\d+ certificate SHA-1 digest:\s*([0-9a-fA-F:]+)", verified)
+    fingerprints = signer_fingerprints(verified)
+    if not fingerprints:
+        raise ValueError("Android SDK did not report an APK signer certificate SHA-1")
     badging = run([str(tools / "aapt"), "dump", "badging", str(args.apk)])
     package = re.search(r"^package: name='([^']+)'", badging, re.MULTILINE)
     if not package:

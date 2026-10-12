@@ -80,5 +80,6 @@ jobs:
           java-version: '21'
       - run: npm ci
       - run: npm ci --prefix functions
+      - run: python3 -m unittest discover -s tests -p 'test_*.py'
       - run: npm test
       - run: npm run build:web
