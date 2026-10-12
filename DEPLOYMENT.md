@@ -2,6 +2,14 @@
 
 All code targets the existing `student-result-pro` Firebase project and Android package `com.edunexa.app`. The current APK signing SHA-1 is already in the owner-provided google-services.json. Google login was confirmed on the owner's phone before this feature upgrade.
 
+## Choose the verified APK
+
+Download `EduNexa-debug-apk` from a successful **push** or manual workflow run. Pull-request runs validate compilation/tests/lint and publish lint reports only. Earlier PR APKs used a different cached key: `06:49:68:1F:55:D7:2D:EC:5D:F7:EE:AC:0A:35:CF:F2:54:AC:00:9A`, which has no Android OAuth registration in the supplied Firebase config. Earlier PR and push APKs both displayed version 2.0.0.
+
+The 2.0.1 patch verifies the finished APK's signature with Android SDK `apksigner`, checks its actual package and SHA-1 against the supplied Android OAuth client, and checks its embedded web client ID before permitting an APK upload. This prevents an unregistered cached key from silently producing a downloadable APK. Current push signing SHA-1: `A3:87:0E:8A:F3:1D:BE:0F:A9:F0:2E:B5:5A:66:BF:C6:BB:2A:38:EA`.
+
+Android will reject an in-place update between APKs signed by different keys. If the installed copy used the old PR key, replacing it with the verified push APK requires removing that copy; this removes local app data. Export any local files first. Firebase account records remain in the project. Production Google OAuth settings still need owner verification if sign-in fails with the verified APK.
+
 ## What requires the project owner
 
 This workspace has no authenticated Firebase administration connection. Production functions, Firestore/Storage rules, indexes and web authorized domains have not been deployed. The new Android and web clients call these functions; install the new feature APK after activating the core backend. Existing installed login builds are separate from this branch.

@@ -14,6 +14,8 @@ gradle testDebugUnitTest lintDebug assembleDebug
 
 Emulator tests use demo projects, not production data. Java is required. GitHub Actions builds the APK and runs checks.
 
+Install APK artifacts only from successful push/manual runs. CI checks the finished APK's actual signature and Firebase OAuth binding before upload. PR runs publish lint reports only because PR caches may use a different debug certificate. The signing patch is version 2.0.1.
+
 ## Activate
 
 [DEPLOYMENT.md](DEPLOYMENT.md) describes owner login, core deployment, first-admin bootstrap, legacy test migration, web authorization, payment setup and device acceptance. [PROJECT_REVIEW.md](PROJECT_REVIEW.md) distinguishes implemented code from production activation and device verification.

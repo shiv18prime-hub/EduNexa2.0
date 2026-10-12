@@ -42,6 +42,9 @@ jobs:
         run: gradle signingReport
       - name: Build debug APK
         run: gradle testDebugUnitTest assembleDebug --stacktrace
+      - name: Verify APK Google OAuth registration
+        if: github.event_name != 'pull_request'
+        run: python3 scripts/verify-google-signing.py app/build/outputs/apk/debug/app-debug.apk app/google-services.json
       - name: Check Android lint
         run: gradle lintDebug --stacktrace
       - name: Print lint errors
@@ -57,7 +60,9 @@ jobs:
           name: android-lint-reports
           path: app/build/reports/lint-results-debug.*
       - uses: actions/upload-artifact@v4
-        if: always()
+        # PR-scoped caches can contain a different, unregistered debug key.
+        # Only publish APKs whose actual signature passed the Firebase check.
+        if: success() && github.event_name != 'pull_request'
         with:
           name: EduNexa-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
