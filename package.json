@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore --project demo-edunexa \"node --test tests/firestore.test.cjs functions/test/*.test.cjs\""
+    "test": "firebase emulators:exec --only firestore,storage --project demo-edunexa \"node --test tests/*.test.cjs functions/test/*.test.cjs\"",
+    "build:web": "node web/build.cjs"
   },
   "repository": {
     "type": "git",

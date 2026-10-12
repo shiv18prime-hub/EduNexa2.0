@@ -100,7 +100,7 @@ class MarksheetMakerActivity : EduActivity() {
         for (i in 0 until subjectBox.childCount) {
             val t = subjectBox.getChildAt(i).tag as? List<*> ?: continue
             val n = (t[0] as EditText).text.toString().trim(); val m = (t[1] as EditText).text.toString().toIntOrNull(); val g = (t[2] as EditText).text.toString().toIntOrNull(); val passValue = (t[3] as EditText).text.toString().toIntOrNull(); val optional = (t[4] as CheckBox).isChecked
-            if (n.isNotBlank() && m != null && g != null && m > 0 && g in 0..m) out.add(Subject(n, m, g, (passValue ?: kotlin.math.ceil(m * 0.33).toInt()).coerceIn(0, m), optional))
+            if (n.isNotBlank() && m != null && g != null && m > 0 && g in 0..m && (passValue==null||passValue in 0..m)) out.add(Subject(n, m, g, passValue ?: kotlin.math.ceil(m * 0.33).toInt(), optional))
         }
         return out
     }
@@ -134,7 +134,7 @@ class MarksheetMakerActivity : EduActivity() {
 
     override fun onActivityResult(rc: Int, res: Int, data: Intent?) {
         super.onActivityResult(rc, res, data); if (res != Activity.RESULT_OK) return
-        if (rc == 401) { logo = data?.data?.let { contentResolver.openInputStream(it)?.use { stream -> BitmapFactory.decodeStream(stream) } }; invalidateFinal(); updatePreview() }
+        if (rc == 401) { logo = data?.data?.let { uri -> runCatching { com.edunexa.app.tools.SafeImages.decode(this,uri,512) }.getOrNull() }; invalidateFinal(); updatePreview() }
         else if (rc == 402) { val uri = data?.data ?: return; val b = sheet ?: return; val pdf = PdfDocument(); val page = pdf.startPage(PdfDocument.PageInfo.Builder(b.width, b.height, 1).create()); page.canvas.drawBitmap(b, 0f, 0f, null); pdf.finishPage(page); runCatching { contentResolver.openOutputStream(uri)?.use { pdf.writeTo(it) }; unsaved = false; status.text = "PDF saved • ID: $verificationId" }.onFailure { status.text = "Save failed: ${it.message}" }; pdf.close() }
     }
 

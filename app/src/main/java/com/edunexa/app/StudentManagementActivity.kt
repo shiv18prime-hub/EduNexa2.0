@@ -43,7 +43,7 @@ class StudentManagementActivity : EduActivity() {
             requests.documents.forEach { r ->
                 val studentId = r.getString("studentId").orEmpty(); val code = r.getString("schoolCode").orEmpty()
                 card(r.getString("studentName") ?: "Student", "${r.getString("studentEmail") ?: ""}\nClass: ${r.getString("className") ?: "—"}", listOf(
-                    "✓ Approve Student" to { approve(r.id, studentId, code, sid) },
+                    "✓ Approve Member" to { approve(r.id, studentId, code, sid) },
                     "Reject Request" to { reject(r.id, studentId) }
                 ))
             }
@@ -55,7 +55,7 @@ class StudentManagementActivity : EduActivity() {
         db.collection("users").whereEqualTo("schoolId", sid).get().addOnSuccessListener { students ->
             status.text = "${students.size()} connected • $pending pending"
             root.addView(TextView(this).apply { text = "Connected Members (${students.size()})"; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(10), 0, dp(8)) })
-            students.documents.forEach { d -> card(d.getString("name") ?: "Student", "${d.getString("email") ?: ""}\nClass: ${d.getString("className") ?: "Not set"}\nSchool Code: ${d.getString("schoolCode") ?: "—"}") }
+            students.documents.forEach { d -> card(d.getString("name") ?: "Student", "${d.getString("email") ?: ""}\nClass: ${d.getString("className") ?: "Not set"}\nSchool Code: ${d.getString("schoolCode") ?: "—"}",listOf("Disconnect Member" to { androidx.appcompat.app.AlertDialog.Builder(this).setMessage("Disconnect this member from your school?").setNegativeButton("Cancel",null).setPositiveButton("Disconnect"){_,_->com.edunexa.app.data.Backend.call("disconnectMember",mapOf("studentId" to d.id),{reload(it["message"].toString())},{reload(it)})}.show() })) }
         }.addOnFailureListener { status.text = it.message ?: "Could not load connected students" }
     }
 

@@ -4,11 +4,16 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function me() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
     function admin() { return signedIn() && me().role == 'admin'; }
-    function school() { return signedIn() && me().role == 'school' && me().schoolApproved == true; }
+    function school() { return signedIn() && me().role == 'school' && me().schoolApproved == true && get(/databases/$(database)/documents/schoolApprovals/$(request.auth.uid)).data.approved == true; }
     function connected(sid) {
       return signedIn() && ((school() && request.auth.uid == sid)
         || (me().role in ['student','teacher'] && me().get('schoolId','') == sid
-          && me().get('schoolJoinStatus','') == 'connected'));
+          && me().get('schoolJoinStatus','') == 'connected'
+          && get(/databases/$(database)/documents/memberships/$(sid+'_'+request.auth.uid)).data.active == true
+          && get(/databases/$(database)/documents/memberships/$(sid+'_'+request.auth.uid)).data.role == me().role
+          && get(/databases/$(database)/documents/schoolApprovals/$(sid)).data.approved == true
+          && get(/databases/$(database)/documents/users/$(sid)).data.role == 'school'
+          && get(/databases/$(database)/documents/users/$(sid)).data.schoolApproved == true));
     }
     function teacher(sid) { return connected(sid) && (school() || me().role == 'teacher'); }
     function ownsConversation(id) {
@@ -20,12 +25,23 @@ service cloud.firestore {
         && request.resource.data.uid == uid
         && request.resource.data.role in ['student','school','teacher']
         && request.resource.data.schoolApproved == (request.resource.data.role != 'school')
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 200
+        && request.resource.data.email is string && request.resource.data.email.size() <= 320
+        && request.resource.data.className is string && request.resource.data.className.size() <= 80
+        && request.resource.data.schoolName is string && request.resource.data.schoolName.size() <= 200
+        && request.resource.data.contactNumber is string && request.resource.data.contactNumber.size() <= 30
+        && request.resource.data.address is string && request.resource.data.address.size() <= 1000
         && request.resource.data.keys().hasOnly(['uid','name','email','role','schoolName','className','contactNumber','address','schoolApproved','createdAt']);
       allow read: if signedIn() && (uid == request.auth.uid || admin()
         || (school() && request.auth.uid == resource.data.get('schoolId','')));
       allow update: if admin() || (signedIn() && uid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','className','phone','dateOfBirth','gender','profileUpdatedAt','profilePhotoUrl','fcmToken','fcmTokenUpdatedAt'])
-        && request.resource.data.name is string && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 200
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 200
+        && request.resource.data.get('className','') is string && request.resource.data.get('className','').size() <= 80
+        && request.resource.data.get('phone','') is string && request.resource.data.get('phone','').size() <= 30
+        && request.resource.data.get('dateOfBirth','') is string && request.resource.data.get('dateOfBirth','').size() <= 30
+        && request.resource.data.get('gender','') is string && request.resource.data.get('gender','').size() <= 50
+        && request.resource.data.get('fcmToken','') is string && request.resource.data.get('fcmToken','').size() <= 4096
         && (!('profilePhotoUrl' in request.resource.data) || request.resource.data.profilePhotoUrl.matches('https://firebasestorage.googleapis.com/.*')));
     }
     match /schoolCodes/{code} { allow get: if signedIn(); allow list,write: if admin(); }
@@ -44,6 +60,8 @@ service cloud.firestore {
       match /messages/{messageId} { allow read: if ownsConversation(id); }
     }
     match /coupons/{id} { allow get: if signedIn(); allow list,write: if admin(); }
+    match /proEntitlements/{id} { allow read: if signedIn() && (id == request.auth.uid || admin()); }
+    match /schoolApprovals/{id} { allow get: if signedIn(); }
     match /plans/{id} { allow read: if signedIn(); allow write: if admin(); }
     match /proOrders/{id} { allow read: if signedIn() && (resource.data.uid == request.auth.uid || admin()); }
     match /couponRedemptions/{id} { allow read: if signedIn() && (resource.data.uid == request.auth.uid || admin()); }

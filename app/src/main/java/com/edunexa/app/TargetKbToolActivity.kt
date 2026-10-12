@@ -75,7 +75,7 @@ class TargetKbToolActivity : EduActivity() {
             }
             pendingBytes=best
             val p=BitmapFactory.decodeByteArray(best,0,best.size);preview.setImageBitmap(p);save.visibility=View.VISIBLE;unsaved=true
-            status.text="Preview • ${best.size/1024} KB • ${p.width}×${p.height}px • target $targetKb KB"
+            status.text="Preview • ${best.size/1024} KB • ${p.width}×${p.height}px • target $targetKb KB${if(best.size>targetKb*1024) " • Target could not be reached; output is larger" else ""}"
             if(work !== original && !work.isRecycled)work.recycle()
         }.onFailure { status.text="Compression failed: ${it.message}";save.visibility=View.GONE }
     }

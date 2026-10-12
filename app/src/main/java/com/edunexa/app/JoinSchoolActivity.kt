@@ -20,6 +20,8 @@ class JoinSchoolActivity : EduActivity() {
             button.isEnabled = false; scan.isEnabled = false; progress.visibility = View.VISIBLE; status.text = "Verifying school and preparing request…"
             repo.joinByCode(code) { ok, message -> progress.visibility = View.GONE; button.isEnabled = true; scan.isEnabled = true; status.text = if (ok) "✓ $message" else message; if (ok) input.isEnabled = false }
         }
+        val cancel=Button(this).apply{text="Cancel Pending Request";setOnClickListener{com.edunexa.app.data.Backend.call("cancelJoin",success={status.text=it["message"].toString();input.isEnabled=true},failure={status.text=it})}}
+        (button.parent as? android.view.ViewGroup)?.addView(cancel)
         button.setOnClickListener { submit(input.text.toString().trim()) }
         val options = GmsBarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).enableAutoZoom().build()
         val scanner = GmsBarcodeScanning.getClient(this, options)

@@ -1,32 +1,23 @@
-# Code review and completion backlog
+# EduNexa 2.0 status
 
-Reviewed baseline `f0abd3b18f62e157b060fa5875e8942a13e0a484`.
+## Implemented
 
-## Fixed in this branch
+- Google/email authentication foundation with profile preservation; teacher signup and dashboards; school approval refresh and logout; server-owned school membership, cancellation, approval/rejection, disconnect and code rotation.
+- Subject result calculator with max/passing marks, optional subjects, validation, shareable text card, refreshed/deletable history and server-computed dashboard aggregates.
+- Callable MCQ publish/list/start/submit with private answer keys, server deadlines, attempt limits and idempotent scoring. Legacy tests require the provided migration.
+- Server-validated school result/attendance/notice publication and school/teacher access scopes.
+- Cloud Storage profile photos shared across devices, with owner/type/size storage rules.
+- School-scoped text conversations, server membership checks and rate limits, listener cleanup and FCM notification trigger.
+- Trusted server-owned approval, membership and Pro entitlement proof records; legacy client-editable profile flags grant no privileges.
+- Server-owned coupon redemption and Pro grants; administrator pricing; Razorpay order creation, verified captured payment, webhook replay handling and full-refund reversal.
+- Trusted issuer marksheet registration, unguessable verification IDs, minimal verification summary, revocation and labelled Pro practice records.
+- Native image resizing, portrait background removal, compression/merge/photo-signature tools and PDF operations with bounded files/background processing; system and keyboard insets.
+- Responsive web app using the same Firebase project and service contracts, with local image/PDF tools; owner-private hosting.
 
-- Google signup no longer replaces an existing user document (role, approval and connection preserved). Removed lifecycle routing that could race with a Google result. Added cancellation, missing-token and OAuth error handling.
-- User creation cannot self-approve a school or inject membership/Pro fields. Self-edit allowlist protects role, approval and membership.
-- Added missing schoolJoinRequests rules. Connected-student queries are allowed only for their approved school. Students use school code display data instead of reading a school's private profile.
-- Connection requests and school decisions use atomic writes; school profile updates require a matching pending request and batched decision.
-- Attendance updates cannot move another school's record to the current school.
-- Pending schools open tools; they do not enter the student dashboard through Continue.
-- CI runs on pull requests, runs lint/unit checks and builds an APK. Debug keystore path now matches Android's default path.
+## Validation and remaining activation
 
-## Remaining work before production
+Automated backend/security/domain tests and Android unit/build/lint checks are recorded in the PR and Actions run. Web bundling is validated; browser QA is unavailable in this workspace. Physical-device acceptance of the feature upgrade remains necessary.
 
-1. Firebase console: confirm providers, actual signing fingerprints and deployed rules. A physical-device test must verify Google login, email registration and returning sessions. No production Firebase credentials are available in this workspace.
-2. Marksheet verification: marksheetVerifications has no rules in the baseline, so writes/reads fail. Design a minimal public verification record and trusted issuer verification before enabling it; exposing entire student documents is inappropriate.
-3. MCQ integrity: answers and scores are supplied/read on the client. Move answer keys and scoring to a trusted backend, add attempt limits and duration enforcement.
-4. Membership/coupons: coupon administration exists; billing, redemption and authoritative Pro entitlement are not implemented. Do not represent this as a working paid subscription.
-5. Results: basic total-marks calculator/history exists; configurable subjects, passing marks, share cards, refreshed history and proper dashboard aggregates remain.
-6. Profile photos: content URIs are local to a device, so storing them in Firestore does not implement cross-device photo sync. Add authenticated storage upload and per-user local caching.
-7. Tools: test large images/PDFs, cancellation, memory limits, background work and exported-file sharing on Android 23 and 35.
-8. School code rotation: standalone code creation should use a transaction to prevent collisions and define revocation/rotation semantics.
-9. Android target 35: verify edge-to-edge insets and accessibility on all screens. Establish stable release signing, versioning, privacy disclosures and backup policy.
-10. Teacher roles/chat and a web application are absent. Agree the data permissions and implement after the student/school core passes testing.
+Production Firebase administration access is absent here. Core functions, rules/indexes, Storage setup, web authorized domain and first-admin bootstrap must be activated by the project owner. Paid checkout additionally needs merchant credentials and a provider sandbox check. Release signing and public distribution remain owner-controlled.
 
-## Acceptance sequence
-
-Register student and school → confirm pending school cannot publish → admin approves school → student joins by active code → school approves/rejects → connected student sees only their school's notices/tests and their own results/attendance → logout and login → test denied cross-school operations → test real APK tools and account switching.
-
-Changes in this branch do not automatically deploy Firebase rules or configure OAuth. CI and device validation must be reported separately from static review.
+See DEPLOYMENT.md for exact activation commands and the full device acceptance sequence. Build success does not establish that production Firebase is deployed or that real payments have been tested.

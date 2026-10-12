@@ -98,7 +98,7 @@ class MainActivity : EduActivity() {
         content.addView(ScrollView(this).apply { addView(root) })
     }
 
-    private fun editProfile(uid: String, currentName: String, currentClass: String, currentPhone: String, currentDob: String, currentGender: String) {
+    private fun editProfile(uid: String, currentName: String, currentClass: String, currentPhone: String, currentDob: String, currentGender: String, role: String = "student") {
         val form = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(18), dp(8), dp(18), 0) }
         fun field(hintText: String, value: String, numeric: Boolean = false) = EditText(this).apply { hint = hintText; setText(value); setPadding(dp(12), dp(10), dp(12), dp(10)); if (numeric) inputType = android.text.InputType.TYPE_CLASS_PHONE }.also { form.addView(it, LinearLayout.LayoutParams(-1, dp(58)).apply { setMargins(0, dp(5), 0, dp(5)) }) }
         val name = field("Full name", currentName); val cls = field("Class", currentClass); val phone = field("Phone number", currentPhone, true); val dob = field("Date of birth (DD/MM/YYYY)", currentDob); val gender = field("Gender", currentGender)
@@ -108,7 +108,7 @@ class MainActivity : EduActivity() {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val newName = name.text.toString().trim(); val newClass = cls.text.toString().trim(); val newPhone = phone.text.toString().trim(); val newDob = dob.text.toString().trim(); val newGender = gender.text.toString().trim()
                 if (newName.length < 2) { name.error = "Enter your full name"; return@setOnClickListener }
-                if (newClass.isBlank()) { cls.error = "Enter class"; return@setOnClickListener }
+                if (newClass.isBlank() && role == "student") { cls.error = "Enter class"; return@setOnClickListener }
                 if (newPhone.isNotBlank() && newPhone.length !in 10..15) { phone.error = "Enter a valid phone number"; return@setOnClickListener }
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
                 val updates = hashMapOf<String, Any>("name" to newName, "className" to newClass, "phone" to newPhone, "dateOfBirth" to newDob, "gender" to newGender, "profileUpdatedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp())
@@ -134,10 +134,10 @@ class MainActivity : EduActivity() {
             val extra = listOfNotNull(phone.takeIf { it.isNotBlank() }?.let { "Phone: $it" }, dob.takeIf { it.isNotBlank() }?.let { "DOB: $it" }, gender.takeIf { it.isNotBlank() }?.let { "Gender: $it" }).joinToString("\n")
             info.text = "$displayName\n$email\nClass: $cls${school?.let { "\n$it" } ?: ""}${if (extra.isNotBlank()) "\n$extra" else ""}"
             d.getString("profilePhotoUrl")?.let { url -> profileImage?.let { com.edunexa.app.data.ProfilePhotos.load(it,url) } }
-            editBtn.isEnabled = true; editBtn.setOnClickListener { editProfile(uid, displayName, if (cls == "—") "" else cls, phone, dob, gender) }
+            editBtn.isEnabled = true; editBtn.setOnClickListener { editProfile(uid, displayName, if (cls == "—") "" else cls, phone, dob, gender,d.getString("role") ?: "student") }
         }.addOnFailureListener { info.text = "Account details unavailable\nCheck your internet connection." } }
         action(root, "🏆", "MCQ History", "Completed tests and scores") { startActivity(Intent(this, McqHistoryActivity::class.java)) }; action(root, "🛠", "EduNexa Tools", "Open all student utility tools") { startActivity(Intent(this, ToolsActivity::class.java)) }
-        root.addView(Button(this).apply { text = "Logout"; isAllCaps = false; setTextColor(Color.parseColor("#B42318")); setOnClickListener { auth.signOut(); getSharedPreferences("edunexa", MODE_PRIVATE).edit().remove("profilePhoto").apply(); startActivity(Intent(this@MainActivity, AuthActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK }); finish() } }, LinearLayout.LayoutParams(-1, dp(54)).apply { setMargins(0, dp(8), 0, 0) })
+        root.addView(Button(this).apply { text = "Logout"; isAllCaps = false; setTextColor(Color.parseColor("#B42318")); setOnClickListener { Session.logout(this@MainActivity) } }, LinearLayout.LayoutParams(-1, dp(54)).apply { setMargins(0, dp(8), 0, 0) })
         content.addView(ScrollView(this).apply { addView(root) })
     }
 }
