@@ -22,9 +22,12 @@ class AdminRepository {
         val code = "EDU-${Random.nextInt(100000, 999999)}"
         val userRef = db.collection("users").document(uid)
         val codeRef = db.collection("schoolCodes").document(code)
-        db.runBatch { batch ->
-            batch.update(userRef, mapOf("schoolApproved" to true, "approvalStatus" to "approved", "schoolCode" to code))
-            batch.set(codeRef, mapOf("code" to code, "schoolId" to uid, "active" to true, "createdAt" to System.currentTimeMillis()))
+        db.runTransaction { transaction ->
+            val school = transaction.get(userRef)
+            check(school.getString("role") == "school") { "School account required" }
+            check(!transaction.get(codeRef).exists()) { "School code collision. Try again." }
+            transaction.update(userRef, mapOf("schoolApproved" to true, "approvalStatus" to "approved", "schoolCode" to code))
+            transaction.set(codeRef, mapOf("schoolName" to (school.getString("schoolName") ?: school.getString("name") ?: "School"), "code" to code, "schoolId" to uid, "active" to true, "createdAt" to System.currentTimeMillis()))
         }.addOnSuccessListener { onResult(true, "School approved • Code: $code") }
             .addOnFailureListener { onResult(false, it.message ?: "Approval failed") }
     }

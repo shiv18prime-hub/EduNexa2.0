@@ -1,12 +1,58 @@
 rules_version = '2';
 service cloud.firestore { match /databases/{database}/documents {
  function signedIn(){return request.auth!=null;} function userData(){return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;} function isAdmin(){return signedIn()&&userData().role=='admin';} function isApprovedSchool(){return signedIn()&&userData().role=='school'&&userData().schoolApproved==true;}
- match /users/{userId}{allow create:if signedIn()&&request.auth.uid==userId&&request.resource.data.role in ['student','school'];allow read:if signedIn()&&(request.auth.uid==userId||isAdmin());allow update:if signedIn()&&((request.auth.uid==userId&&request.resource.data.role==resource.data.role&&request.resource.data.schoolApproved==resource.data.schoolApproved)||isAdmin());}
+ function approvedSchool(sid){return get(/databases/$(database)/documents/users/$(sid)).data.role=='school'&&get(/databases/$(database)/documents/users/$(sid)).data.schoolApproved==true;}
+ function schoolReview(userId){
+   let rid=request.auth.uid+'_'+userId;
+   let before=get(/databases/$(database)/documents/schoolJoinRequests/$(rid)).data;
+   let after=getAfter(/databases/$(database)/documents/schoolJoinRequests/$(rid)).data;
+   return isApprovedSchool()&&resource.data.role=='student'
+     &&resource.data.get('pendingSchoolId','')==request.auth.uid
+     &&before.status=='pending'&&before.studentId==userId&&before.schoolId==request.auth.uid
+     &&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['schoolId','schoolCode','schoolJoinStatus','schoolJoinedAt','pendingSchoolId','pendingSchoolCode'])
+     &&((after.status=='approved'&&request.resource.data.schoolJoinStatus=='connected'&&request.resource.data.schoolId==request.auth.uid&&request.resource.data.schoolCode==before.schoolCode)
+       ||(after.status=='rejected'&&request.resource.data.schoolJoinStatus=='rejected'&&request.resource.data.get('schoolId','')==resource.data.get('schoolId','')));
+ }
+ match /users/{userId}{
+   allow create:if signedIn()&&request.auth.uid==userId&&request.resource.data.uid==userId
+     &&request.resource.data.role in ['student','school']
+     &&request.resource.data.schoolApproved==(request.resource.data.role=='student')
+     &&request.resource.data.keys().hasOnly(['uid','name','email','role','schoolName','className','contactNumber','address','schoolApproved','createdAt']);
+   allow read:if signedIn()&&(request.auth.uid==userId||isAdmin()
+     ||(isApprovedSchool()&&resource.data.role=='student'&&resource.data.get('schoolId','')==request.auth.uid));
+   allow update:if signedIn()&&(isAdmin()||schoolReview(userId)
+     ||(request.auth.uid==userId&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','className','phone','dateOfBirth','gender','profileUpdatedAt','profilePhotoUri','fcmToken','fcmTokenUpdatedAt']))
+     ||(request.auth.uid==userId&&resource.data.role=='student'
+       &&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['schoolJoinStatus','pendingSchoolId','pendingSchoolCode'])
+       &&request.resource.data.schoolJoinStatus=='pending'
+       &&getAfter(/databases/$(database)/documents/schoolJoinRequests/$(request.resource.data.pendingSchoolId+'_'+userId)).data.status=='pending'
+       &&getAfter(/databases/$(database)/documents/schoolJoinRequests/$(request.resource.data.pendingSchoolId+'_'+userId)).data.schoolCode==request.resource.data.pendingSchoolCode));
+ }
+ match /schoolJoinRequests/{rid}{
+   allow read:if signedIn()&&(isAdmin()||resource.data.studentId==request.auth.uid||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid));
+   allow create,update:if signedIn()&&userData().role=='student'
+     &&request.resource.data.studentId==request.auth.uid
+     &&rid==request.resource.data.schoolId+'_'+request.auth.uid
+     &&request.resource.data.status=='pending'
+     &&request.resource.data.keys().hasOnly(['schoolId','schoolName','studentId','studentName','studentEmail','className','schoolCode','status','createdAt'])
+     &&approvedSchool(request.resource.data.schoolId)
+     &&get(/databases/$(database)/documents/schoolCodes/$(request.resource.data.schoolCode)).data.active==true
+     &&get(/databases/$(database)/documents/schoolCodes/$(request.resource.data.schoolCode)).data.schoolId==request.resource.data.schoolId;
+   allow update:if isApprovedSchool()&&resource.data.schoolId==request.auth.uid&&resource.data.status=='pending'
+     &&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewedAt'])
+     &&request.resource.data.status in ['approved','rejected']
+     &&get(/databases/$(database)/documents/users/$(resource.data.studentId)).data.get('pendingSchoolId','')==request.auth.uid
+     &&((request.resource.data.status=='approved'
+       &&getAfter(/databases/$(database)/documents/users/$(resource.data.studentId)).data.schoolJoinStatus=='connected'
+       &&getAfter(/databases/$(database)/documents/users/$(resource.data.studentId)).data.schoolId==request.auth.uid)
+       ||(request.resource.data.status=='rejected'
+       &&getAfter(/databases/$(database)/documents/users/$(resource.data.studentId)).data.schoolJoinStatus=='rejected'));
+ }
  match /results/{resultId}{allow create:if signedIn()&&request.resource.data.userId==request.auth.uid;allow read,update,delete:if signedIn()&&(resource.data.userId==request.auth.uid||isAdmin());}
  match /schoolResults/{resultId}{allow create:if isApprovedSchool()&&request.resource.data.schoolId==request.auth.uid;allow read:if signedIn()&&(isAdmin()||(resource.data.studentId==request.auth.uid)||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid));allow update,delete:if isAdmin()||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid);}
  match /notices/{noticeId}{allow create:if isApprovedSchool()&&request.resource.data.schoolId==request.auth.uid;allow read:if signedIn()&&(isAdmin()||(userData().role=='student'&&userData().schoolId==resource.data.schoolId)||(isApprovedSchool()&&request.auth.uid==resource.data.schoolId));allow update,delete:if isAdmin()||(isApprovedSchool()&&request.auth.uid==resource.data.schoolId);}
  match /mcqTests/{testId}{allow create:if isApprovedSchool()&&request.resource.data.schoolId==request.auth.uid;allow read:if signedIn()&&(isAdmin()||(userData().role=='student'&&userData().schoolId==resource.data.schoolId)||(isApprovedSchool()&&request.auth.uid==resource.data.schoolId));allow update,delete:if isAdmin()||(isApprovedSchool()&&request.auth.uid==resource.data.schoolId);}
  match /mcqAttempts/{attemptId}{allow create:if signedIn()&&userData().role=='student'&&request.resource.data.studentId==request.auth.uid&&request.resource.data.schoolId==userData().schoolId;allow read:if signedIn()&&(resource.data.studentId==request.auth.uid||isAdmin()||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid));allow update,delete:if isAdmin();}
- match /attendance/{attendanceId}{allow create,update:if isApprovedSchool()&&request.resource.data.schoolId==request.auth.uid;allow read:if signedIn()&&(isAdmin()||(resource.data.studentId==request.auth.uid)||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid));allow delete:if isAdmin()||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid);}
+ match /attendance/{attendanceId}{allow create:if isApprovedSchool()&&request.resource.data.schoolId==request.auth.uid;allow update:if isApprovedSchool()&&resource.data.schoolId==request.auth.uid&&request.resource.data.schoolId==resource.data.schoolId;allow read:if signedIn()&&(isAdmin()||(resource.data.studentId==request.auth.uid)||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid));allow delete:if isAdmin()||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid);}
  match /coupons/{couponId}{allow read:if signedIn();allow create,update,delete:if isAdmin();} match /schoolCodes/{code}{allow read:if signedIn();allow create,update,delete:if isAdmin();}
 }}

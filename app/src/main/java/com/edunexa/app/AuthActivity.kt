@@ -10,6 +10,7 @@ import com.edunexa.app.data.AuthRepository
 import com.edunexa.app.data.UserProfile
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
@@ -27,13 +28,23 @@ class AuthActivity : AppCompatActivity() {
     private lateinit var status: TextView; private lateinit var progress: ProgressBar
 
     private val googleLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.data == null) {
+            progress.visibility = View.GONE
+            status.text = "Google sign-in cancelled. You can try again."
+            return@registerForActivityResult
+        }
         val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
         try {
-            val account = task.result
-            val credential = GoogleAuthProvider.getCredential(account.idToken, null)
+            val account = task.getResult(ApiException::class.java)
+            val token = account.idToken ?: error("Google returned no ID token. Check Firebase Google sign-in configuration.")
+            val credential = GoogleAuthProvider.getCredential(token, null)
             progress.visibility = View.VISIBLE
             firebaseAuth.signInWithCredential(credential).addOnSuccessListener { authResult ->
-                val user = authResult.user ?: return@addOnSuccessListener
+                val user = authResult.user ?: run {
+                    progress.visibility = View.GONE
+                    status.text = "Google account could not be loaded. Try again."
+                    return@addOnSuccessListener
+                }
                 if (googleLoginMode) {
                     db.collection("users").document(user.uid).get().addOnSuccessListener { doc ->
                         if (doc.exists() && doc.getString("role") != null) routeCurrentUser(status, progress)
@@ -43,8 +54,15 @@ class AuthActivity : AppCompatActivity() {
                 }
                 val isSchool = selectedRole == "school"
                 val profile = UserProfile(uid=user.uid,name=if(isSchool) school.text.toString().trim() else name.text.toString().trim().ifBlank{user.displayName?:"Student"},email=user.email?:"",role=selectedRole,schoolName=if(isSchool)school.text.toString().trim() else "",className=if(isSchool)"" else classInput.text.toString().trim(),contactNumber=if(isSchool)contact.text.toString().trim() else "",address=if(isSchool)address.text.toString().trim() else "",schoolApproved=!isSchool)
-                db.collection("users").document(user.uid).set(profile).addOnSuccessListener { routeCurrentUser(status, progress) }.addOnFailureListener { progress.visibility=View.GONE;status.text=it.message?:"Could not save profile" }
+                // A returning Google user keeps their role, approval and school connection.
+                val profileRef = db.collection("users").document(user.uid)
+                db.runTransaction { transaction ->
+                    val existing = transaction.get(profileRef)
+                    if (!existing.exists()) transaction.set(profileRef, profile)
+                }.addOnSuccessListener { routeCurrentUser(status, progress) }
+                    .addOnFailureListener { progress.visibility=View.GONE;status.text=it.message?:"Could not save profile" }
             }.addOnFailureListener { progress.visibility=View.GONE;status.text=it.message?:"Google sign-in failed" }
+        } catch(e:ApiException){ progress.visibility=View.GONE;status.text=if(e.statusCode==10) "Google sign-in configuration error (10). Register this APK signing SHA-1/SHA-256 in Firebase and refresh google-services.json." else if(e.statusCode==12501) "Google sign-in cancelled. You can try again." else "Google sign-in failed (${e.statusCode}). Try again."
         } catch(e:Exception){ progress.visibility=View.GONE;status.text=e.message?:"Google sign-in cancelled" }
     }
 
@@ -67,7 +85,7 @@ class AuthActivity : AppCompatActivity() {
         register.setOnClickListener{val isSchool=selectedRole=="school";val ok=email.text.isNotBlank()&&password.text.length>=6&&if(isSchool)school.text.isNotBlank()&&contact.text.isNotBlank()&&address.text.isNotBlank() else name.text.isNotBlank()&&classInput.text.isNotBlank();if(!ok){status.text="Please complete all required fields. Password must be at least 6 characters.";return@setOnClickListener};progress.visibility=View.VISIBLE;authRepository.register(name=if(isSchool)school.text.toString().trim() else name.text.toString().trim(),email=email.text.toString().trim(),password=password.text.toString(),role=selectedRole,schoolName=if(isSchool)school.text.toString().trim() else "",className=classInput.text.toString().trim(),contactNumber=contact.text.toString().trim(),address=address.text.toString().trim()){success,msg->progress.visibility=View.GONE;status.text=msg;if(success)routeCurrentUser(status,progress)}}
         login.setOnClickListener{if(email.text.isBlank()||password.text.isBlank()){status.text="Enter email and password";return@setOnClickListener};progress.visibility=View.VISIBLE;firebaseAuth.signInWithEmailAndPassword(email.text.toString().trim(),password.text.toString()).addOnSuccessListener{userResult->val uid=userResult.user?.uid?:return@addOnSuccessListener;db.collection("users").document(uid).get().addOnSuccessListener{doc->progress.visibility=View.GONE;val role=doc.getString("role");if(adminLoginMode){if(role=="admin")open(AdminActivity::class.java)else{firebaseAuth.signOut();status.text="Access denied. This account is not an EduNexa administrator."}}else{routeCurrentUser(status,progress)}}.addOnFailureListener{progress.visibility=View.GONE;status.text=it.message?:"Could not verify account role"}}.addOnFailureListener{progress.visibility=View.GONE;status.text=it.message?:"Login failed"}}
     }
-    override fun onStart(){super.onStart();if(::status.isInitialized&&firebaseAuth.currentUser!=null&&!routingSession)routeCurrentUser(status,progress)}
+
     private fun routeCurrentUser(status:TextView,progress:ProgressBar){if(routingSession)return;val uid=firebaseAuth.currentUser?.uid?:run{progress.visibility=View.GONE;return};routingSession=true;progress.visibility=View.VISIBLE;db.collection("users").document(uid).get().addOnSuccessListener{doc->routingSession=false;progress.visibility=View.GONE;when(doc.getString("role")){"admin"->open(AdminActivity::class.java);"school"->if(doc.getBoolean("schoolApproved")==true)open(SchoolActivity::class.java)else open(PendingApprovalActivity::class.java);"student"->open(MainActivity::class.java);else->{status.text="Account role is not configured";firebaseAuth.signOut()}}}.addOnFailureListener{routingSession=false;progress.visibility=View.GONE;status.text=it.message?:"Could not restore account. Check your internet and try again."}}
     private fun open(target:Class<*>){startActivity(Intent(this,target).apply{flags=Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK});finish()}
 }

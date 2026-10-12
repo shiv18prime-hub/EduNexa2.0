@@ -10,8 +10,7 @@ class PendingApprovalActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pending_approval)
         findViewById<Button>(R.id.continueBtn).setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
+            startActivity(Intent(this, ToolsActivity::class.java))
         }
     }
 }

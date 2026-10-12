@@ -2,7 +2,11 @@ name: Android APK
 on:
   workflow_dispatch:
   push:
+    branches: [ main, "fix/**" ]
+  pull_request:
     branches: [ main ]
+permissions:
+  contents: read
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,14 +22,14 @@ jobs:
       - name: Restore stable debug keystore
         uses: actions/cache@v4
         with:
-          path: ~/.config/.android/debug.keystore
+          path: ~/.android/debug.keystore
           key: edunexa-debug-keystore-v1
       - name: Create debug keystore if missing
         run: |
-          mkdir -p ~/.config/.android
-          if [ ! -f ~/.config/.android/debug.keystore ]; then
+          mkdir -p ~/.android
+          if [ ! -f ~/.android/debug.keystore ]; then
             keytool -genkeypair -v \
-              -keystore ~/.config/.android/debug.keystore \
+              -keystore ~/.android/debug.keystore \
               -storepass android \
               -alias AndroidDebugKey \
               -keypass android \
@@ -37,9 +41,23 @@ jobs:
       - name: Print debug signing fingerprints
         run: gradle signingReport
       - name: Build debug APK
-        run: gradle assembleDebug --stacktrace
+        run: gradle testDebugUnitTest lintDebug assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         if: success()
         with:
           name: EduNexa-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+
+  rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - run: npm test

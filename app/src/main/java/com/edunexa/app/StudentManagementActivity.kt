@@ -61,20 +61,30 @@ class StudentManagementActivity : AppCompatActivity() {
 
     private fun approve(requestId: String, studentId: String, code: String, schoolId: String) {
         if (studentId.isBlank()) return reload("Invalid student request")
-        db.collection("users").document(studentId).update(
-            "schoolId", schoolId, "schoolCode", code, "schoolJoinStatus", "connected", "schoolJoinedAt", FieldValue.serverTimestamp(),
-            "pendingSchoolId", FieldValue.delete(), "pendingSchoolCode", FieldValue.delete()
-        ).addOnSuccessListener {
-            db.collection("schoolJoinRequests").document(requestId).update("status", "approved", "reviewedAt", FieldValue.serverTimestamp())
-                .addOnSuccessListener { reload("Student approved") }.addOnFailureListener { reload("Student connected; request status refresh failed") }
-        }.addOnFailureListener { reload(it.message ?: "Could not approve student") }
+        val userRef = db.collection("users").document(studentId)
+        val requestRef = db.collection("schoolJoinRequests").document(requestId)
+        db.runBatch { batch ->
+            batch.update(userRef, mapOf(
+                "schoolId" to schoolId, "schoolCode" to code, "schoolJoinStatus" to "connected",
+                "schoolJoinedAt" to FieldValue.serverTimestamp(),
+                "pendingSchoolId" to FieldValue.delete(), "pendingSchoolCode" to FieldValue.delete()
+            ))
+            batch.update(requestRef, mapOf("status" to "approved", "reviewedAt" to FieldValue.serverTimestamp()))
+        }.addOnSuccessListener { reload("Student approved") }
+            .addOnFailureListener { reload(it.message ?: "Could not approve student") }
     }
 
     private fun reject(requestId: String, studentId: String) {
-        db.collection("schoolJoinRequests").document(requestId).update("status", "rejected", "reviewedAt", FieldValue.serverTimestamp()).addOnSuccessListener {
-            if (studentId.isNotBlank()) db.collection("users").document(studentId).update("schoolJoinStatus", "rejected", "pendingSchoolId", FieldValue.delete(), "pendingSchoolCode", FieldValue.delete())
-            reload("Request rejected")
-        }.addOnFailureListener { reload(it.message ?: "Could not reject request") }
+        if (studentId.isBlank()) return reload("Invalid student request")
+        db.runBatch { batch ->
+            batch.update(db.collection("schoolJoinRequests").document(requestId),
+                mapOf("status" to "rejected", "reviewedAt" to FieldValue.serverTimestamp()))
+            batch.update(db.collection("users").document(studentId), mapOf(
+                "schoolJoinStatus" to "rejected", "pendingSchoolId" to FieldValue.delete(),
+                "pendingSchoolCode" to FieldValue.delete()
+            ))
+        }.addOnSuccessListener { reload("Request rejected") }
+            .addOnFailureListener { reload(it.message ?: "Could not reject request") }
     }
 
     private fun reload(message: String) { Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); load() }
