@@ -22,14 +22,14 @@ jobs:
       - name: Restore stable debug keystore
         uses: actions/cache@v4
         with:
-          path: ~/.android/debug.keystore
+          path: ~/.config/.android/debug.keystore
           key: edunexa-debug-keystore-v1
       - name: Create debug keystore if missing
         run: |
-          mkdir -p ~/.android
-          if [ ! -f ~/.android/debug.keystore ]; then
+          mkdir -p ~/.config/.android
+          if [ ! -f ~/.config/.android/debug.keystore ]; then
             keytool -genkeypair -v \
-              -keystore ~/.android/debug.keystore \
+              -keystore ~/.config/.android/debug.keystore \
               -storepass android \
               -alias AndroidDebugKey \
               -keypass android \
@@ -41,9 +41,23 @@ jobs:
       - name: Print debug signing fingerprints
         run: gradle signingReport
       - name: Build debug APK
-        run: gradle testDebugUnitTest lintDebug assembleDebug --stacktrace
+        run: gradle testDebugUnitTest assembleDebug --stacktrace
+      - name: Check Android lint
+        run: gradle lintDebug --stacktrace
+      - name: Print lint errors
+        if: always()
+        run: |
+          if [ -f app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt ]; then
+            cat app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+          fi
+      - name: Upload lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-lint-reports
+          path: app/build/reports/lint-results-debug.*
       - uses: actions/upload-artifact@v4
-        if: success()
+        if: always()
         with:
           name: EduNexa-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
