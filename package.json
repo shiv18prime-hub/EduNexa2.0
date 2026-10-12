@@ -22,7 +22,8 @@
     "@firebase/rules-unit-testing": "^6.0.0",
     "esbuild": "^0.28.2",
     "firebase": "^13.0.0",
-    "firebase-tools": "^13.35.1"
+    "firebase-tools": "^13.35.1",
+    "pdf-lib": "^1.17.1"
   },
   "private": true
 }

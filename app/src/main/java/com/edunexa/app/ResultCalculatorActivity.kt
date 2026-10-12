@@ -57,7 +57,16 @@ class ResultCalculatorActivity : EduActivity() {
         val o=CheckBox(this).apply { text="Optional (excluded from total)"; isChecked=optional };card.addView(o)
         card.addView(Button(this).apply { text="Remove Subject"; setOnClickListener { subjectBox.removeView(card) } });card.tag=listOf(n,m,g,p,o);subjectBox.addView(card)
     }
-    private fun rows()=(0 until subjectBox.childCount).map { i -> val t=subjectBox.getChildAt(i).tag as List<*>; fun num(j:Int)=(t[j] as EditText).text.toString().toIntOrNull() ?: throw IllegalArgumentException("Fill marks in every row"); SubjectMarks((t[0] as EditText).text.toString().trim(),num(1),num(2),num(3),(t[4] as CheckBox).isChecked) }
+    private fun rows(): List<SubjectMarks> {
+        return (0 until subjectBox.childCount).map { i ->
+            val fields = subjectBox.getChildAt(i).tag as List<*>
+            fun number(j: Int): Int {
+                return (fields[j] as EditText).text.toString().toIntOrNull()
+                    ?: throw IllegalArgumentException("Fill marks in every row")
+            }
+            SubjectMarks((fields[0] as EditText).text.toString().trim(), number(1), number(2), number(3), (fields[4] as CheckBox).isChecked)
+        }
+    }
     private fun loadHistory(){history.removeAllViews();history.addView(TextView(this).apply { text="Loading…" });repo.history({rows->history.removeAllViews();if(rows.isEmpty())history.addView(TextView(this).apply { text="No saved results yet" });rows.forEach { r-> val box=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL;setPadding(0,dp(10),0,dp(10)) };box.addView(TextView(this).apply { text="${r["exam"] ?: "Result"}\n${r["obtained"]}/${r["total"]} • %.2f%% • ${r["grade"]} • ${r["result"] ?: ""}".format((r["percentage"] as? Number)?.toDouble() ?: 0.0) });box.addView(Button(this).apply { text="Remove";setOnClickListener { AlertDialog.Builder(this@ResultCalculatorActivity).setMessage("Remove this saved result?").setNegativeButton("Cancel",null).setPositiveButton("Remove") { _,_->repo.delete(r["id"].toString()){ok,msg->Toast.makeText(this@ResultCalculatorActivity,msg,Toast.LENGTH_SHORT).show();if(ok)loadHistory()} }.show() } });history.addView(box) } },{error->history.removeAllViews();history.addView(TextView(this).apply {text=error})})}
     override fun onSaveInstanceState(out:Bundle){out.putString("exam",exam.text.toString());runCatching { out.putString("subjects",JSONArray(rows().map { JSONObject(it.asMap()) }).toString()) };super.onSaveInstanceState(out)}
 }
