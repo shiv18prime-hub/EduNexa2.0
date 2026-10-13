@@ -1,4 +1,5 @@
 'use strict';
+const backendRequire = require('node:module').createRequire(require.resolve('../functions/package.json'));
 const {PROJECT, WEB_DOMAIN, authorizedDomains} = require('./activation.cjs');
 const CONFIG_URL = `https://identitytoolkit.googleapis.com/admin/v2/projects/${PROJECT}/config`;
 
@@ -27,7 +28,7 @@ if (require.main === module) {
   (async () => {
     const args = process.argv.slice(2);
     if (args.some(arg => arg !== '--apply') || args.length > 1) throw Error('Usage: node scripts/authorize-web.cjs [--apply]');
-    const {applicationDefault} = require('../functions/node_modules/firebase-admin/app');
+    const {applicationDefault} = backendRequire('firebase-admin/app');
     await authorizeWeb(applicationDefault(), args.includes('--apply'));
   })().catch(error => { console.error(`Web authorization stopped: ${error.code || error.message}`); process.exitCode = 1; });
 }
