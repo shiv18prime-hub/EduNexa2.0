@@ -1,4 +1,5 @@
 'use strict';
+const backendRequire = require('node:module').createRequire(require.resolve('../functions/package.json'));
 // Run only in the Firebase owner's authenticated environment. Dry run by default.
 const {PROJECT, adminArguments, verifiedAdministrator} = require('./activation.cjs');
 
@@ -18,9 +19,9 @@ async function setAdministrator(selection, auth, db, log = console.log) {
 if (require.main === module) {
   (async () => {
     const selection = adminArguments(process.argv.slice(2));
-    const {initializeApp, applicationDefault} = require('../functions/node_modules/firebase-admin/app');
-    const {getAuth} = require('../functions/node_modules/firebase-admin/auth');
-    const {getFirestore} = require('../functions/node_modules/firebase-admin/firestore');
+    const {initializeApp, applicationDefault} = backendRequire('firebase-admin/app');
+    const {getAuth} = backendRequire('firebase-admin/auth');
+    const {getFirestore} = backendRequire('firebase-admin/firestore');
     const app = initializeApp({projectId: PROJECT, credential: applicationDefault()});
     await setAdministrator(selection, getAuth(app), getFirestore(app));
   })().catch(error => { console.error(`Administrator setup stopped: ${error.code || error.message}`); process.exitCode = 1; });
