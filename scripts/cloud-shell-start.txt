@@ -1,0 +1,14 @@
+EduNexa core activation — student-result-pro
+
+Run this command in this Cloud Shell terminal:
+
+  bash scripts/activate-project.sh
+
+Google sign-in/authorization happens here in your own Google environment.
+Enter any authorization code in this terminal only; never send credentials to chat.
+When asked for an admin email, enter your existing EduNexa Google-login email.
+The script validates that account before deployment, authorizes the existing web
+domain, grants that selected account the admin role and checks core endpoints.
+After success: sign out/sign in in EduNexa, verify a school from Admin, then approve
+a student and teacher join request and run the acceptance checks in DEPLOYMENT.md.
+Paid checkout needs separate merchant setup; see DEPLOYMENT.md.

@@ -1,6 +1,6 @@
 # EduNexa activation
 
-All code targets the existing `student-result-pro` Firebase project and Android package `com.edunexa.app`. The current APK signing SHA-1 is already in the owner-provided google-services.json. Google login was confirmed on the owner's phone before this feature upgrade.
+All code targets the existing `student-result-pro` Firebase project and Android package `com.edunexa.app`. The current APK signing SHA-1 is already in the owner-provided google-services.json. On 2026-10-13 the owner confirmed that Google login works with the verified 2.0.1 APK.
 
 ## Choose the verified APK
 
@@ -12,7 +12,25 @@ Android will reject an in-place update between APKs signed by different keys. If
 
 ## What requires the project owner
 
-This workspace has no authenticated Firebase administration connection. Production functions, Firestore/Storage rules, indexes and web authorized domains have not been deployed. The new Android and web clients call these functions; install the new feature APK after activating the core backend. Existing installed login builds are separate from this branch.
+This workspace has no authenticated Firebase administration connection. Production functions, Firestore/Storage rules, indexes and web authorized domains have not been deployed from this branch. The configured dashboard endpoint returned HTTP 404 on 2026-10-13. Working Android Google login does not provide administrative deployment credentials.
+
+### Guided activation
+
+[Open the prepared repository in Google Cloud Shell](https://shell.cloud.google.com/?cloudshell_git_repo=https://github.com/shiv18prime-hub/EduNexa2.0.git&cloudshell_git_branch=fix/auth-school-access&cloudshell_workspace=.&show=terminal&cloudshell_print=scripts/cloud-shell-start.txt), then run:
+
+```bash
+bash scripts/activate-project.sh
+```
+
+This requires Node.js 22 or later. If Cloud Shell has an older default, run `nvm install 22` and `nvm use 22` first. Sign in with the Google account that owns `student-result-pro` when asked. Enter any authorization code in your own Cloud Shell terminal. Do not send passwords, tokens or authorization codes to chat. Third-party repository launch links start an isolated Cloud Shell environment without existing credentials, so an owner sign-in is expected.
+
+When prompted, enter the existing EduNexa email that should become administrator. The script checks that this is an enabled Firebase Authentication account with a verified email, shows its UID, and runs a dry configuration check before deployment. Use your own Google-login account. That account's app role will become administrator; other profile fields are preserved.
+
+The script deploys the core functions and rules/indexes, adds the private web domain while preserving existing authorized domains and provider settings, grants the chosen account the admin role, and checks five protected callable endpoints. A passing endpoint check establishes reachability and authentication enforcement; it does not replace the signed-in acceptance sequence below. If any step fails, the script stops and can be rerun after the reported issue is resolved.
+
+Cloud Functions and Storage may require supported billing and an initialized default Storage bucket. If Firebase reports one of these prerequisites, resolve it in the owner's Firebase console before rerunning. The script does not change billing. Paid checkout functions require the separate merchant setup below.
+
+### Individual commands
 
 In an authenticated terminal or Google Cloud Shell, clone this repository and check out `fix/auth-school-access`. Run:
 
@@ -20,15 +38,22 @@ In an authenticated terminal or Google Cloud Shell, clone this repository and ch
 bash scripts/deploy-core.sh
 ```
 
-The Firebase CLI will ask you to sign in. Use the Google account that owns `student-result-pro`. Cloud Functions and Storage may require the project's supported billing plan. This script deploys the core features; paid checkout functions are excluded until payment credentials are configured. Firebase credentials stay in the owner's environment.
+The Firebase CLI reuses an existing login or Application Default Credentials; otherwise it asks you to sign in. Use the Google account that owns `student-result-pro`. This script deploys the core features; paid checkout functions are excluded until payment credentials are configured. Firebase credentials stay in the owner's environment.
 
-Choose an existing Firebase Authentication UID for the first administrator, then run:
+Choose an existing verified Firebase Authentication account for the first administrator. Preview the selected UID before applying:
 
 ```bash
-node scripts/set-admin.cjs --uid EXISTING_UID --apply
+node scripts/set-admin.cjs --email YOUR_EDUNEXA_EMAIL
+node scripts/set-admin.cjs --email YOUR_EDUNEXA_EMAIL --apply
 ```
 
-For the Admin SDK helper scripts, authenticate Application Default Credentials in your own environment if they are unavailable (`gcloud auth application-default login --no-launch-browser`).
+`--uid EXISTING_UID` is also supported. For the Admin SDK helper scripts, authenticate Application Default Credentials in your own environment if they are unavailable (`gcloud auth application-default login --no-launch-browser`). Sign out and sign in again after granting the role.
+
+Check deployed endpoint reachability without accessing account data:
+
+```bash
+node scripts/check-backend.cjs
+```
 
 Sign in as that account to approve schools, create coupons, grant Pro and configure a paid plan. Signups cannot create an administrator themselves. Existing schools must be verified once through Admin → Users → Verify / Rotate Code (or the web Admin school list), even if an old profile says approved. Existing student/teacher connections should send a request again and be approved by the verified school. Server-owned proof records now determine access; legacy approval or Pro profile flags are not trusted. Restore any legitimate existing Pro memberships with an administrator grant.
 
@@ -46,6 +71,13 @@ The first command is a dry run. The scripts require Firebase Admin credentials i
 Private web address: https://edunexa-school-hub.shiv18prime.chatgpt.site
 
 Add `edunexa-school-hub.shiv18prime.chatgpt.site` in Firebase Authentication settings → Authorized domains. Email/password sign-in uses the existing project provider. Google popup login requires this domain authorization. The hosting audience remains owner-private; sharing with schools is a separate deliberate hosting decision.
+
+The guided setup adds this domain automatically. For a separate preview/apply using owner credentials:
+
+```bash
+node scripts/authorize-web.cjs
+node scripts/authorize-web.cjs --apply
+```
 
 ## Payments
 

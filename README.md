@@ -20,6 +20,8 @@ Install APK artifacts only from successful push/manual runs. CI checks the finis
 
 [DEPLOYMENT.md](DEPLOYMENT.md) describes owner login, core deployment, first-admin bootstrap, legacy test migration, web authorization, payment setup and device acceptance. [PROJECT_REVIEW.md](PROJECT_REVIEW.md) distinguishes implemented code from production activation and device verification.
 
+[Open the prepared Cloud Shell setup](https://shell.cloud.google.com/?cloudshell_git_repo=https://github.com/shiv18prime-hub/EduNexa2.0.git&cloudshell_git_branch=fix/auth-school-access&cloudshell_workspace=.&show=terminal&cloudshell_print=scripts/cloud-shell-start.txt) and run `bash scripts/activate-project.sh` in the owner's Google environment. The guided setup deploys core services, authorizes the web domain, grants a selected verified account the admin role and checks endpoint reachability.
+
 Private web address: https://edunexa-school-hub.shiv18prime.chatgpt.site
 
-New feature clients need the matching backend deployment before school services become available. Existing Google login has been confirmed on the owner's phone; the signing certificate remains registered in google-services.json.
+New feature clients need the matching backend deployment before school services become available. On 2026-10-13 the owner confirmed Google login works on the verified 2.0.1 APK; the signing certificate remains registered in google-services.json.

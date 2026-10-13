@@ -18,6 +18,10 @@
 
 Automated backend/security/domain tests and Android unit/build/lint checks are recorded in the PR and Actions run. Web bundling is validated; browser QA is unavailable in this workspace. Physical-device acceptance of the feature upgrade remains necessary.
 
+The owner confirmed Google sign-in works on the verified 2.0.1 APK on 2026-10-13. Guided owner activation now validates the selected first administrator, preserves web authentication settings and checks protected endpoint reachability after deployment. Automated tests cover wrong/disabled/unverified admin selection, dry-run behavior, domain preservation and missing or unprotected endpoints.
+
 Production Firebase administration access is absent here. Core functions, rules/indexes, Storage setup, web authorized domain and first-admin bootstrap must be activated by the project owner. Paid checkout additionally needs merchant credentials and a provider sandbox check. Release signing and public distribution remain owner-controlled.
+
+The configured production dashboard URL returned HTTP 404 on 2026-10-13; production core activation has not been verified. The Cloud Shell procedure in DEPLOYMENT.md is ready to run in the owner's Google environment.
 
 See DEPLOYMENT.md for exact activation commands and the full device acceptance sequence. Build success does not establish that production Firebase is deployed or that real payments have been tested.
