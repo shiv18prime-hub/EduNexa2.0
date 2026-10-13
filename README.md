@@ -20,7 +20,9 @@ Install APK artifacts only from successful push/manual runs. CI checks the finis
 
 [DEPLOYMENT.md](DEPLOYMENT.md) describes owner login, core deployment, first-admin bootstrap, legacy test migration, web authorization, payment setup and device acceptance. [PROJECT_REVIEW.md](PROJECT_REVIEW.md) distinguishes implemented code from production activation and device verification.
 
-[Open the prepared Cloud Shell setup](https://shell.cloud.google.com/?cloudshell_git_repo=https://github.com/shiv18prime-hub/EduNexa2.0.git&cloudshell_git_branch=fix/auth-school-access&cloudshell_workspace=.&show=terminal&cloudshell_print=scripts/cloud-shell-start.txt) and run `bash scripts/activate-project.sh` in the owner's Google environment. The guided setup deploys core services, authorizes the web domain, grants a selected verified account the admin role and checks endpoint reachability.
+[Open the prepared Cloud Shell setup](https://shell.cloud.google.com/?cloudshell_git_repo=https://github.com/shiv18prime-hub/EduNexa2.0.git&cloudshell_git_branch=fix/auth-school-access&cloudshell_workspace=.&show=terminal&cloudshell_print=scripts/cloud-shell-start.txt) and run `bash scripts/activate-project.sh --spark` in the owner's Google environment. The owner has chosen a zero budget. Default setup deploys only Firestore rules/indexes, authorizes the web domain and grants a selected verified account the admin role. It does not deploy Functions/Storage or change billing.
+
+This prepares the free foundation; it does **not** activate the complete app. Current dashboard, result saving, school/test/chat and Pro operations still require a backend migration for Spark. Cloud photo upload also needs a no-billing replacement. See the feature-status table in [DEPLOYMENT.md](DEPLOYMENT.md). Existing privileged-write restrictions remain in place.
 
 Private web address: https://edunexa-school-hub.shiv18prime.chatgpt.site
 

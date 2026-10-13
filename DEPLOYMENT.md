@@ -14,31 +14,63 @@ Android will reject an in-place update between APKs signed by different keys. If
 
 This workspace has no authenticated Firebase administration connection. Production functions, Firestore/Storage rules, indexes and web authorized domains have not been deployed from this branch. The configured dashboard endpoint returned HTTP 404 on 2026-10-13. Working Android Google login does not provide administrative deployment credentials.
 
-### Guided activation
+### Zero-budget setup (current owner choice)
+
+The owner confirmed a zero budget on 2026-10-13. Keep `student-result-pro` on **Spark**; do not attach a billing account or upgrade to Blaze. Firebase Authentication (Google/email) and the Firestore Standard free quota can be used without a payment method. Current limits and exclusions are documented at [Firebase pricing](https://firebase.google.com/pricing) and [Firestore quotas](https://firebase.google.com/docs/firestore/quotas). Quota exhaustion can interrupt service; this is not an unlimited free backend.
+
+Default guided setup now deploys **only Firestore rules and indexes**, authorizes the existing web address, and grants an existing verified account the admin role. It never deploys Functions or Storage and never links billing. The Firebase Admin SDK used by the local owner scripts is a client library, not a deployed Cloud Function.
 
 [Open the prepared repository in Google Cloud Shell](https://shell.cloud.google.com/?cloudshell_git_repo=https://github.com/shiv18prime-hub/EduNexa2.0.git&cloudshell_git_branch=fix/auth-school-access&cloudshell_workspace=.&show=terminal&cloudshell_print=scripts/cloud-shell-start.txt), then run:
 
 ```bash
-bash scripts/activate-project.sh
+bash scripts/activate-project.sh --spark
 ```
 
 This requires Node.js 22 or later. If Cloud Shell has an older default, run `nvm install 22` and `nvm use 22` first. Sign in with the Google account that owns `student-result-pro` when asked. Enter any authorization code in your own Cloud Shell terminal. Do not send passwords, tokens or authorization codes to chat. Third-party repository launch links start an isolated Cloud Shell environment without existing credentials, so an owner sign-in is expected.
 
 When prompted, enter the existing EduNexa email that should become administrator. The script checks that this is an enabled Firebase Authentication account with a verified email, shows its UID, and runs a dry configuration check before deployment. Use your own Google-login account. That account's app role will become administrator; other profile fields are preserved.
 
-The script deploys the core functions and rules/indexes, adds the private web domain while preserving existing authorized domains and provider settings, grants the chosen account the admin role, and checks five protected callable endpoints. A passing endpoint check establishes reachability and authentication enforcement; it does not replace the signed-in acceptance sequence below. If any step fails, the script stops and can be rerun after the reported issue is resolved.
+If dependencies and ADC have already been prepared in this checkout, resume without reinstalling packages. Replace the placeholder with the existing verified EduNexa account selected for administrator:
 
-Cloud Functions and Storage may require supported billing and an initialized default Storage bucket. If Firebase reports one of these prerequisites, resolve it in the owner's Firebase console before rerunning. The script does not change billing. Paid checkout functions require the separate merchant setup below.
+```bash
+bash scripts/activate-project.sh --spark --installed --email YOUR_EDUNEXA_EMAIL
+```
+
+For a Cloud Shell checkout whose plain `git pull` reports `From .`, update from GitHub explicitly before running setup:
+
+```bash
+git pull --ff-only https://github.com/shiv18prime-hub/EduNexa2.0.git fix/auth-school-access
+```
+
+Setup validates the selected account and web configuration before deploying. Admin role and domain changes are applied only after successful Firestore deployment. Errors stop the sequence. It does not probe undeployed Functions or claim full application activation.
+
+| Feature in the current APK/web | Status with this Spark setup |
+| --- | --- |
+| Google/email login, profile creation and text edits | Uses Authentication and Firestore directly; verify after rules deployment |
+| Basic calculator and local image/PDF processing | No hosted compute required; verify on the device |
+| Selected account's admin role, user list and coupon definition editing | Direct Firestore/owner setup; available after setup, subject to access rules |
+| Dashboard, saving calculated results, school approvals and membership operations | Still call Cloud Functions; need a backend migration before they work on Spark |
+| School result/attendance/notice publishing, timed test scoring, chat sending, Pro grants/redemptions and marksheet registration/verification | Still call Cloud Functions; not activated by Spark setup |
+| Profile photo uploads | Still use Firebase Storage; need a no-billing replacement |
+| Chat push delivery | Still depends on a deployed notification function |
+
+The complete online app is **not yet available on Spark**. Existing access rules remain restrictive: this setup does not make protected results, memberships, answer keys or Pro grants client-writable to bypass the missing server. The remaining free-backend work must retain role boundaries and trusted grading. Login success or an admin role grant does not mean school workflows have been activated.
+
+### Billed backend (optional, not used for the zero-budget setup)
+
+The existing full backend requires the [Blaze plan for Functions deployment](https://firebase.google.com/docs/functions/get-started) and [Storage](https://firebase.google.com/docs/storage/web/start), with a default Storage bucket initialized. This is not a no-card free plan, even where no-cost usage quotas apply. Do not use it for the owner's current zero-budget setup.
+
+An owner who separately chooses billed hosting can explicitly run `bash scripts/activate-project.sh --blaze`. That path deploys core Functions and rules/indexes, authorizes the web domain, grants the chosen administrator, and checks five protected callable endpoints. These probes establish reachability/authentication enforcement, not signed-in acceptance. The script itself never upgrades billing.
 
 ### Individual commands
 
 In an authenticated terminal or Google Cloud Shell, clone this repository and check out `fix/auth-school-access`. Run:
 
 ```bash
-bash scripts/deploy-core.sh
+bash scripts/deploy-spark.sh
 ```
 
-The Firebase CLI reuses an existing login or Application Default Credentials; otherwise it asks you to sign in. Use the Google account that owns `student-result-pro`. This script deploys the core features; paid checkout functions are excluded until payment credentials are configured. Firebase credentials stay in the owner's environment.
+This deploys only Firestore rules/indexes. The Firebase CLI reuses an existing login or Application Default Credentials; otherwise it asks you to sign in. Use the Google account that owns `student-result-pro`. Firebase credentials stay in the owner's environment. The billed core equivalent is `bash scripts/deploy-core.sh --blaze` and should not be used on the current Spark project.
 
 Choose an existing verified Firebase Authentication account for the first administrator. Preview the selected UID before applying:
 
@@ -49,13 +81,13 @@ node scripts/set-admin.cjs --email YOUR_EDUNEXA_EMAIL --apply
 
 `--uid EXISTING_UID` is also supported. For the Admin SDK helper scripts, authenticate Application Default Credentials in your own environment if they are unavailable (`gcloud auth application-default login --no-launch-browser`). Sign out and sign in again after granting the role.
 
-Check deployed endpoint reachability without accessing account data:
+Only after separately deploying the billed backend, check endpoint reachability without accessing account data:
 
 ```bash
 node scripts/check-backend.cjs
 ```
 
-Sign in as that account to approve schools, create coupons, grant Pro and configure a paid plan. Signups cannot create an administrator themselves. Existing schools must be verified once through Admin → Users → Verify / Rotate Code (or the web Admin school list), even if an old profile says approved. Existing student/teacher connections should send a request again and be approved by the verified school. Server-owned proof records now determine access; legacy approval or Pro profile flags are not trusted. Restore any legitimate existing Pro memberships with an administrator grant.
+Once the full backend is available, sign in as that account to approve schools, create coupons, grant Pro and configure a paid plan. Signups cannot create an administrator themselves. Existing schools must be verified once through Admin → Users → Verify / Rotate Code (or the web Admin school list), even if an old profile says approved. Existing student/teacher connections should send a request again and be approved by the verified school. Server-owned proof records now determine access; legacy approval or Pro profile flags are not trusted. Restore any legitimate existing Pro memberships with an administrator grant.
 
 If legacy MCQ tests exist, move their answer keys out of student-readable documents:
 
