@@ -67,6 +67,8 @@ test('web authorization dry run and already-authorized config perform no patch',
 test('web authorization applies only the domain field, preserving providers', async () => {
   const calls = [];
   await authorizeWeb({getAccessToken: async () => ({access_token: 'mock-only'})}, true, async (url, options) => {
+    // Identity Toolkit rejects owner user credentials without a quota project.
+    if (options.headers['x-goog-user-project'] !== PROJECT) return response(403, {});
     calls.push({url, options});
     return response(200, calls.length === 1 ? {authorizedDomains: ['localhost'], signIn: {email: {enabled: true}}} : {authorizedDomains: ['localhost', WEB_DOMAIN]});
   }, silent);

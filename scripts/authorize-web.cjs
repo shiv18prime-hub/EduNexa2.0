@@ -7,7 +7,9 @@ async function authorizeWeb(credential, apply, fetcher = fetch, log = console.lo
   async function request(url, options = {}) {
     const token = await credential.getAccessToken();
     const response = await fetcher(url, {...options, headers: {
-      'Authorization': `Bearer ${token.access_token}`, 'Content-Type': 'application/json'
+      'Authorization': `Bearer ${token.access_token}`, 'Content-Type': 'application/json',
+      // A raw REST request must send the quota project explicitly for owner ADC.
+      'x-goog-user-project': PROJECT
     }, signal: AbortSignal.timeout(15000), redirect: 'error'});
     if (!response.ok) throw Error(`Firebase Authentication configuration returned HTTP ${response.status}. Check owner permissions.`);
     return response.json();

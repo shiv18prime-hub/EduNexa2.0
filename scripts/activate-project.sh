@@ -13,8 +13,11 @@ echo 'Activating the core EduNexa backend in student-result-pro.'
 echo 'Use the Google account that owns this Firebase project. Credentials stay in this terminal environment.'
 npm ci
 npm ci --prefix functions
-if ! gcloud auth application-default print-access-token >/dev/null 2>&1; then
+# Cloud Shell metadata can return a token even when no owner ADC file exists.
+# Validate owner ADC and its quota project together before using Identity Toolkit.
+if ! gcloud auth application-default set-quota-project student-result-pro; then
   gcloud auth application-default login --no-launch-browser
+  gcloud auth application-default set-quota-project student-result-pro
 fi
 read -r -p 'Existing verified EduNexa email to use as administrator: ' admin_email
 node scripts/set-admin.cjs --email "$admin_email"
