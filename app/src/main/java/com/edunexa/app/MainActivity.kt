@@ -89,11 +89,11 @@ class MainActivity : EduActivity() {
             name.text = d.getString("name") ?: auth.currentUser?.displayName ?: "Student"; val className = d.getString("className"); val schoolName = d.getString("schoolName")
             identity.text = listOfNotNull(className?.takeIf { it.isNotBlank() }?.let { "Class $it" }, schoolName?.takeIf { it.isNotBlank() }).joinToString(" • ").ifBlank { "Your personalized learning dashboard" }
             status.text = if (!schoolName.isNullOrBlank()) "●  Connected to $schoolName" else "○  School not connected • Tap Connect School"; status.setTextColor(Color.parseColor(if (!schoolName.isNullOrBlank()) "#157347" else "#B45309"))
-            com.edunexa.app.data.Backend.call("dashboard",success={stats->
+            com.edunexa.app.data.DashboardRepository().load({stats->
                 resultValue.text=(stats["latestPercentage"] as? Number)?.toDouble()?.let{"%.1f%%".format(it)}?:"—"
                 attendanceValue.text=(stats["attendancePercentage"] as? Number)?.toDouble()?.let{"%.0f%%".format(it)}?:"—"
                 status.text=if(stats["schoolJoinStatus"]=="connected")"● Connected to ${stats["schoolName"]}" else if(stats["schoolJoinStatus"]=="pending")"● School connection pending" else "○ School not connected"
-            },failure={resultValue.text="View";attendanceValue.text="View"})
+            },{resultValue.text="View";attendanceValue.text="View"})
         }.addOnFailureListener { status.text = "Offline • Some dashboard data may be unavailable"; status.setTextColor(Color.parseColor("#B45309")); resultValue.text = "View"; attendanceValue.text = "View" } }
         content.addView(ScrollView(this).apply { addView(root) })
     }

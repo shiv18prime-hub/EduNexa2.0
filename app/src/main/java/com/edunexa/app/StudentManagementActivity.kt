@@ -8,10 +8,12 @@ import com.google.android.material.card.MaterialCardView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.edunexa.app.data.SchoolWorkflowRepository
 
 class StudentManagementActivity : EduActivity() {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val workflows = SchoolWorkflowRepository()
     private lateinit var root: LinearLayout
     private lateinit var status: TextView
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
@@ -52,16 +54,22 @@ class StudentManagementActivity : EduActivity() {
     }
 
     private fun loadConnected(sid: String, pending: Int) {
-        db.collection("users").whereEqualTo("schoolId", sid).get().addOnSuccessListener { students ->
-            status.text = "${students.size()} connected • $pending pending"
-            root.addView(TextView(this).apply { text = "Connected Members (${students.size()})"; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(10), 0, dp(8)) })
-            students.documents.forEach { d -> card(d.getString("name") ?: "Student", "${d.getString("email") ?: ""}\nClass: ${d.getString("className") ?: "Not set"}\nSchool Code: ${d.getString("schoolCode") ?: "—"}",listOf("Disconnect Member" to { androidx.appcompat.app.AlertDialog.Builder(this).setMessage("Disconnect this member from your school?").setNegativeButton("Cancel",null).setPositiveButton("Disconnect"){_,_->com.edunexa.app.data.Backend.call("disconnectMember",mapOf("studentId" to d.id),{reload(it["message"].toString())},{reload(it)})}.show() })) }
+        db.collection("memberships").whereEqualTo("schoolId", sid).whereEqualTo("active", true).get().addOnSuccessListener { memberships ->
+            val rows=memberships.documents.filter{it.getString("role")=="student"}
+            status.text = "${rows.size} connected • $pending pending"
+            root.addView(TextView(this).apply { text = "Connected Members (${rows.size})"; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(10), 0, dp(8)) })
+            rows.forEach { membership ->
+                val uid=membership.getString("uid")?:return@forEach
+                db.collection("users").document(uid).get().addOnSuccessListener{d->
+                    if(d.exists()&&d.getString("schoolId")==sid&&d.getString("schoolJoinStatus")=="connected")card(d.getString("name") ?: "Student", "${d.getString("email") ?: ""}\nClass: ${d.getString("className") ?: "Not set"}\nSchool Code: ${d.getString("schoolCode") ?: "—"}",listOf("Disconnect Member" to { androidx.appcompat.app.AlertDialog.Builder(this).setMessage("Disconnect this member from your school?").setNegativeButton("Cancel",null).setPositiveButton("Disconnect"){_,_->workflows.disconnect(uid){_,message->reload(message)}}.show() }))
+                }
+            }
         }.addOnFailureListener { status.text = it.message ?: "Could not load connected students" }
     }
 
     private fun approve(requestId:String,studentId:String,code:String,schoolId:String){review(studentId,true)}
     private fun reject(requestId:String,studentId:String){review(studentId,false)}
-    private fun review(uid:String,approve:Boolean){com.edunexa.app.data.Backend.call("reviewJoin",mapOf("studentId" to uid,"approve" to approve),{reload(it["message"].toString())},{reload(it)})}
+    private fun review(uid:String,approve:Boolean){workflows.review(uid,approve){_,message->reload(message)}}
 
     private fun reload(message: String) { Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); load() }
 }

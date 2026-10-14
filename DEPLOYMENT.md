@@ -49,12 +49,13 @@ Setup validates the selected account and web configuration before deploying. Adm
 | Google/email login, profile creation and text edits | Uses Authentication and Firestore directly; verify after rules deployment |
 | Basic calculator and local image/PDF processing | No hosted compute required; verify on the device |
 | Selected account's admin role, user list and coupon definition editing | Direct Firestore/owner setup; available after setup, subject to access rules |
-| Dashboard, saving calculated results, school approvals and membership operations | Still call Cloud Functions; need a backend migration before they work on Spark |
+| Student/teacher dashboard reads and personal calculator result history | Migrated to private Firestore reads/writes in this branch; deploy the updated app and rules before use |
+| School approval code rotation, join requests, review/cancel, active memberships and disconnect | Migrated to admin-only or paired Firestore transactions in this branch; deploy the updated app and rules before use |
 | School result/attendance/notice publishing, timed test scoring, chat sending, Pro grants/redemptions and marksheet registration/verification | Still call Cloud Functions; not activated by Spark setup |
 | Profile photo uploads | Still use Firebase Storage; need a no-billing replacement |
 | Chat push delivery | Still depends on a deployed notification function |
 
-The complete online app is **not yet available on Spark**. Existing access rules remain restrictive: this setup does not make protected results, memberships, answer keys or Pro grants client-writable to bypass the missing server. The remaining free-backend work must retain role boundaries and trusted grading. Login success or an admin role grant does not mean school workflows have been activated.
+The complete online app is **not yet available on Spark**. The migrations above are source changes and have not yet been deployed to the owner’s Firebase project or installed as an updated APK. Existing access rules remain restrictive: protected school results, memberships, answer keys and Pro grants are not made freely client-writable to bypass the missing server. The remaining free-backend work must retain role boundaries and trusted grading. Login success or an admin role grant does not mean every school feature has been activated.
 
 ### Billed backend (optional, not used for the zero-budget setup)
 
