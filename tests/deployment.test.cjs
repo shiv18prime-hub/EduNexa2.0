@@ -27,7 +27,7 @@ printf '%s\\n' "firebase $*" >> "$EDUNEXA_TEST_LOG"
 if [[ "$1" == deploy && "\${EDUNEXA_TEST_FAIL_DEPLOY:-}" == true ]]; then exit 37; fi
 `, {mode: 0o755});
     const result = spawnSync('bash', [join(root, 'scripts', script), ...args], {
-      encoding: 'utf8', input: 'admin@example.com\n', timeout: 10000,
+      encoding: 'utf8', timeout: 10000,
       env: {...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH}`, EDUNEXA_TEST_LOG: log, ...extraEnv}
     });
     assert.ifError(result.error);
