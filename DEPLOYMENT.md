@@ -49,8 +49,9 @@ Setup validates the selected account and web configuration before deploying. Adm
 | Google/email login, profile creation and text edits | Uses Authentication and Firestore directly; verify after rules deployment |
 | Basic calculator and local image/PDF processing | No hosted compute required; verify on the device |
 | Selected account's admin role, user list and coupon definition editing | Direct Firestore/owner setup; available after setup, subject to access rules |
-| Student/teacher dashboard reads and personal calculator result history | Migrated to private Firestore reads/writes in this branch; deploy the updated app and rules before use |
-| School approval code rotation, join requests, review/cancel, active memberships and disconnect | Migrated to admin-only or paired Firestore transactions in this branch; deploy the updated app and rules before use |
+| Android student/teacher dashboard reads and personal calculator result history | Migrated to private Firestore reads/writes in this branch; deploy the updated APK and rules before use |
+| Android school approval code rotation, join requests, review/cancel, active memberships and disconnect | Migrated to admin-only or paired Firestore transactions in this branch; deploy the updated APK and rules before use |
+| Web dashboard, calculator result saving and school membership flow | Still call Cloud Functions; Spark migration remains |
 | School result/attendance/notice publishing, timed test scoring, chat sending, Pro grants/redemptions and marksheet registration/verification | Still call Cloud Functions; not activated by Spark setup |
 | Profile photo uploads | Still use Firebase Storage; need a no-billing replacement |
 | Chat push delivery | Still depends on a deployed notification function |
