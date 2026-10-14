@@ -15,6 +15,7 @@ test('Spark school join and approval require paired transactional writes',async(
   await assertSucceeds(getDoc(doc(school,'users','joiner')));
   await assertSucceeds(runTransaction(school,async tx=>{const memberRef=doc(school,'users','joiner'),membershipRef=doc(school,'memberships','school_joiner');const member=await tx.get(memberRef),membership=await tx.get(membershipRef);if(member.get('schoolId')!=='school'||membership.get('active')!==true)throw Error('member is not connected');tx.update(memberRef,{schoolId:'',schoolName:'',schoolCode:'',schoolJoinStatus:'',pendingSchoolId:'',pendingSchoolCode:''});tx.update(membershipRef,{active:false});}));
   await assertFails(getDoc(doc(school,'users','joiner')));
+  await assertSucceeds(runTransaction(student,async tx=>{const profile=await tx.get(profileRef),code=await tx.get(doc(student,'schoolCodes','CODE')),schoolProfile=await tx.get(doc(student,'users','school')),approval=await tx.get(doc(student,'schoolApprovals','school'));await tx.get(doc(student,'memberships','school_joiner'));await tx.get(requestRef);if(!profile.exists()||!code.exists()||!schoolProfile.exists()||!approval.exists())throw Error('missing reconnect fixture');tx.set(requestRef,{...request,status:'pending',createdAt:3});tx.update(profileRef,{schoolJoinStatus:'pending',pendingSchoolId:'school',pendingSchoolCode:'CODE'});}));
   await assertFails(updateDoc(doc(db('other'),'users','joiner'),{role:'admin'}));
 });
 test('personal calculator results save privately while school-issued records remain protected',async()=>{

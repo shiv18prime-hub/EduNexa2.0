@@ -137,7 +137,9 @@ service cloud.firestore {
       allow list: if signedIn() && (admin() || resource.data.studentId == request.auth.uid || (school() && resource.data.schoolId == request.auth.uid));
       allow create: if validJoinRequest(request.resource.data.schoolId, request.auth.uid);
       allow update: if signedIn() && (
-        (resource.data.studentId == request.auth.uid && resource.data.status in ['rejected','cancelled']
+        (resource.data.studentId == request.auth.uid && resource.data.status in ['rejected','cancelled','approved']
+          && resource.data.schoolId == request.resource.data.schoolId
+          && resource.data.studentId == request.resource.data.studentId
           && validJoinRequest(resource.data.schoolId, request.auth.uid))
         || (resource.data.studentId == request.auth.uid && resource.data.status == 'pending'
           && request.resource.data.status == 'cancelled'
