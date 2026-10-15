@@ -7,7 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.edunexa.app.data.McqRepository
 import com.google.android.material.card.MaterialCardView
 
-class McqHistoryActivity : AppCompatActivity() {
+class McqHistoryActivity : EduActivity() {
     private val repo = McqRepository()
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
@@ -21,7 +21,7 @@ class McqHistoryActivity : AppCompatActivity() {
         root.addView(TextView(this).apply {
             text = "Test History"
             textSize = 27f
-            setTypeface(typeface, 1)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
         })
         val status = TextView(this).apply {
             text = "Loading…"

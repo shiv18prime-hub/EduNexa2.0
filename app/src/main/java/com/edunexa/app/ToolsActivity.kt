@@ -12,7 +12,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
-class ToolsActivity : AppCompatActivity() {
+class ToolsActivity : EduActivity() {
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun bg(color: String, radius: Float, stroke: String? = null): GradientDrawable = GradientDrawable().apply {
         setColor(Color.parseColor(color)); cornerRadius = dp(radius.toInt()).toFloat()
@@ -48,6 +48,8 @@ class ToolsActivity : AppCompatActivity() {
         }
 
         section("Image Tools", "Fast tools for forms, photos and documents")
+        card("↔", "Image Resizer", "Set exact pixel dimensions", ImageResizeActivity::class.java)
+        card("✂", "Portrait Background Remover • Pro", "Save a transparent PNG of a person", BackgroundRemoveActivity::class.java)
         card("▦", "Image Merge", "Combine multiple images into one", ImageMergeActivity::class.java)
         card("✦", "Photo & Signature Maker", "Prepare exam-form photo and signature", PhotoSignatureToolActivity::class.java)
         card("⇩", "Target KB Compressor", "Compress an image to your target size", TargetKbToolActivity::class.java)

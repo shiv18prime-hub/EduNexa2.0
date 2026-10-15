@@ -1,0 +1,30 @@
+{
+  "name": "edunexa2.0",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore,storage --project demo-edunexa \"node --test tests/*.test.cjs functions/test/*.test.cjs\"",
+    "build:web": "node web/build.cjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiv18prime-hub/EduNexa2.0.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/shiv18prime-hub/EduNexa2.0/issues"
+  },
+  "homepage": "https://github.com/shiv18prime-hub/EduNexa2.0#readme",
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "esbuild": "^0.28.2",
+    "firebase": "^13.0.0",
+    "firebase-tools": "^13.35.1",
+    "pdf-lib": "^1.17.1"
+  },
+  "private": true
+}

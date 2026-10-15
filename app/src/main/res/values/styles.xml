@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.EduNexa" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="Theme.EduNexa.Base" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">#3157D5</item>
         <item name="colorPrimaryVariant">#2443A8</item>
         <item name="colorSecondary">#6547E8</item>
@@ -12,8 +12,7 @@
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:statusBarColor">#F6F7FC</item>
         <item name="android:navigationBarColor">#FFFFFF</item>
-        <item name="android:windowLightNavigationBar">true</item>
-        <item name="android:forceDarkAllowed">false</item>
         <item name="android:windowActionModeOverlay">true</item>
     </style>
+    <style name="Theme.EduNexa" parent="Theme.EduNexa.Base" />
 </resources>

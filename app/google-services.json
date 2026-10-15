@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "166593018818-91etuaal8115qujav2kng2gs45735gv1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.edunexa.app",
+            "certificate_hash": "a3870e8af31dbe0fa9f02eb55a66bfc6bb2a38ea"
+          }
+        },
+        {
           "client_id": "166593018818-cs9ied4ko075qn106ecl6a180243tik5.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

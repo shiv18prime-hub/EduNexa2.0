@@ -18,7 +18,7 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import java.util.UUID
 
-class MarksheetMakerActivity : AppCompatActivity() {
+class MarksheetMakerActivity : EduActivity() {
     data class Subject(val name: String, val max: Int, val got: Int, val pass: Int, val optional: Boolean)
 
     private lateinit var school: EditText
@@ -49,8 +49,8 @@ class MarksheetMakerActivity : AppCompatActivity() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(18), dp(20), dp(18), dp(30)); setBackgroundColor(Color.parseColor("#F6F7FC"))
         }
-        root.addView(TextView(this).apply { text = "Professional Marksheet Maker"; textSize = 26f; setTypeface(typeface, 1) })
-        root.addView(TextView(this).apply { text = "Custom passing marks • grades • verified QR • live preview"; setPadding(0, dp(5), 0, dp(14)) })
+        root.addView(TextView(this).apply { text = "Professional Marksheet Maker"; textSize = 26f; setTypeface(typeface, android.graphics.Typeface.BOLD) })
+        root.addView(TextView(this).apply { text = "Custom passing marks • grades • QR lookup • live preview"; setPadding(0, dp(5), 0, dp(14)) })
         val form = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(10), dp(14), dp(14)); background = rounded("#FFFFFF", 18) }
         fun field(h: String) = EditText(this).apply {
             hint = h; background = rounded("#F7F8FC", 10); setPadding(dp(12), dp(10), dp(12), dp(10)); form.addView(this, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(7) })
@@ -58,7 +58,7 @@ class MarksheetMakerActivity : AppCompatActivity() {
         school = field("School Name"); address = field("School Address / Contact / Code"); student = field("Student Name"); roll = field("Roll / Admission No."); clazz = field("Class / Section"); exam = field("Exam Name"); session = field("Academic Session")
         form.addView(Button(this).apply { text = "Choose School Logo"; isAllCaps = false; setOnClickListener { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply { type = "image/*"; addCategory(Intent.CATEGORY_OPENABLE) }, 401) } })
         root.addView(form)
-        root.addView(TextView(this).apply { text = "SUBJECTS & MARKS"; setTypeface(typeface, 1); setPadding(0, dp(18), 0, dp(7)) })
+        root.addView(TextView(this).apply { text = "SUBJECTS & MARKS"; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(18), 0, dp(7)) })
         subjectBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }; root.addView(subjectBox)
         root.addView(Button(this).apply { text = "＋ Add Subject"; isAllCaps = false; setOnClickListener { addSubject() } })
         summary = TextView(this).apply { setPadding(dp(12), dp(12), dp(12), dp(12)); background = rounded("#FFFFFF", 12) }; root.addView(summary)
@@ -100,7 +100,7 @@ class MarksheetMakerActivity : AppCompatActivity() {
         for (i in 0 until subjectBox.childCount) {
             val t = subjectBox.getChildAt(i).tag as? List<*> ?: continue
             val n = (t[0] as EditText).text.toString().trim(); val m = (t[1] as EditText).text.toString().toIntOrNull(); val g = (t[2] as EditText).text.toString().toIntOrNull(); val passValue = (t[3] as EditText).text.toString().toIntOrNull(); val optional = (t[4] as CheckBox).isChecked
-            if (n.isNotBlank() && m != null && g != null && m > 0 && g in 0..m) out.add(Subject(n, m, g, (passValue ?: kotlin.math.ceil(m * 0.33).toInt()).coerceIn(0, m), optional))
+            if (n.isNotBlank() && m != null && g != null && m > 0 && g in 0..m && (passValue==null||passValue in 0..m)) out.add(Subject(n, m, g, passValue ?: kotlin.math.ceil(m * 0.33).toInt(), optional))
         }
         return out
     }
@@ -123,16 +123,18 @@ class MarksheetMakerActivity : AppCompatActivity() {
     private fun qr(v: String, size: Int): Bitmap { val m = QRCodeWriter().encode(v, BarcodeFormat.QR_CODE, size, size); val b = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565); for (y in 0 until size) for (x in 0 until size) b.setPixel(x, y, if (m[x, y]) Color.BLACK else Color.WHITE); return b }
 
     private fun generate() {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: run { status.text = "Login required"; return }; val r = rows(); if (school.text.isBlank() || student.text.isBlank() || r.none { !it.optional }) { status.text = "Enter school, student and at least one main subject"; return }; val (m, g, pct) = calc(r); val rs = result(r); status.text = "Registering verification…"
-        db.collection("users").document(uid).get().addOnSuccessListener { u ->
-            val approved = u.getString("role") == "school" && u.getBoolean("schoolApproved") == true; val id = "EDX-" + UUID.randomUUID().toString().take(8).uppercase(); val record = hashMapOf<String, Any>("verificationId" to id, "issuerUid" to uid, "issuerApproved" to approved, "schoolName" to school.text.toString(), "studentName" to student.text.toString(), "rollNo" to roll.text.toString(), "className" to clazz.text.toString(), "examName" to exam.text.toString(), "session" to session.text.toString(), "subjects" to r.map { mapOf("name" to it.name, "max" to it.max, "obtained" to it.got, "passMarks" to it.pass, "optional" to it.optional) }, "totalObtained" to g, "totalMax" to m, "percentage" to pct, "result" to rs, "qrPayload" to "EDUNEXA:RESULT:$id", "createdAt" to FieldValue.serverTimestamp())
-            db.collection("marksheetVerifications").document(id).set(record).addOnSuccessListener { verificationId = id; sheet = drawSheet(r, m, g, pct, rs, true, id); preview.setImageBitmap(sheet); save.visibility = View.VISIBLE; unsaved = true; status.text = "Verified • QR added • ID: $id" }.addOnFailureListener { status.text = "Verification failed: ${it.message}" }
-        }.addOnFailureListener { status.text = "Account check failed: ${it.message}" }
+        val r=rows();if(school.text.isBlank()||student.text.isBlank()||clazz.text.isBlank()||exam.text.isBlank()||r.none{!it.optional}){status.text="Enter school, student, class, exam and subjects";return}
+        if(r.size!=subjectBox.childCount){status.text="Complete or remove every subject row";return}
+        status.text="Registering record…"
+        com.edunexa.app.data.Backend.call("createMarksheet",mapOf("schoolName" to school.text.toString(),"studentName" to student.text.toString(),"className" to clazz.text.toString(),"examName" to exam.text.toString(),"session" to session.text.toString(),"rollNo" to roll.text.toString(),"subjects" to r.map{mapOf("name" to it.name,"max" to it.max,"obtained" to it.got,"passMarks" to it.pass,"optional" to it.optional)}),{record->
+            val id=record["id"].toString();school.setText(record["schoolName"].toString());val (m,g,pct)=calc(r);verificationId=id;sheet=drawSheet(r,m,g,pct,result(r),true,id);preview.setImageBitmap(sheet);save.visibility=View.VISIBLE;unsaved=true
+            status.text=if(record["issuerApproved"]==true)"School record registered • ID: $id" else "Practice record • ID: $id"
+        },{status.text=it})
     }
 
     override fun onActivityResult(rc: Int, res: Int, data: Intent?) {
         super.onActivityResult(rc, res, data); if (res != Activity.RESULT_OK) return
-        if (rc == 401) { logo = data?.data?.let { contentResolver.openInputStream(it)?.use { stream -> BitmapFactory.decodeStream(stream) } }; invalidateFinal(); updatePreview() }
+        if (rc == 401) { logo = data?.data?.let { uri -> runCatching { com.edunexa.app.tools.SafeImages.decode(this,uri,512) }.getOrNull() }; invalidateFinal(); updatePreview() }
         else if (rc == 402) { val uri = data?.data ?: return; val b = sheet ?: return; val pdf = PdfDocument(); val page = pdf.startPage(PdfDocument.PageInfo.Builder(b.width, b.height, 1).create()); page.canvas.drawBitmap(b, 0f, 0f, null); pdf.finishPage(page); runCatching { contentResolver.openOutputStream(uri)?.use { pdf.writeTo(it) }; unsaved = false; status.text = "PDF saved • ID: $verificationId" }.onFailure { status.text = "Save failed: ${it.message}" }; pdf.close() }
     }
 

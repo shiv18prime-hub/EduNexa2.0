@@ -1,12 +1,241 @@
 rules_version = '2';
-service cloud.firestore { match /databases/{database}/documents {
- function signedIn(){return request.auth!=null;} function userData(){return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;} function isAdmin(){return signedIn()&&userData().role=='admin';} function isApprovedSchool(){return signedIn()&&userData().role=='school'&&userData().schoolApproved==true;}
- match /users/{userId}{allow create:if signedIn()&&request.auth.uid==userId&&request.resource.data.role in ['student','school'];allow read:if signedIn()&&(request.auth.uid==userId||isAdmin());allow update:if signedIn()&&((request.auth.uid==userId&&request.resource.data.role==resource.data.role&&request.resource.data.schoolApproved==resource.data.schoolApproved)||isAdmin());}
- match /results/{resultId}{allow create:if signedIn()&&request.resource.data.userId==request.auth.uid;allow read,update,delete:if signedIn()&&(resource.data.userId==request.auth.uid||isAdmin());}
- match /schoolResults/{resultId}{allow create:if isApprovedSchool()&&request.resource.data.schoolId==request.auth.uid;allow read:if signedIn()&&(isAdmin()||(resource.data.studentId==request.auth.uid)||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid));allow update,delete:if isAdmin()||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid);}
- match /notices/{noticeId}{allow create:if isApprovedSchool()&&request.resource.data.schoolId==request.auth.uid;allow read:if signedIn()&&(isAdmin()||(userData().role=='student'&&userData().schoolId==resource.data.schoolId)||(isApprovedSchool()&&request.auth.uid==resource.data.schoolId));allow update,delete:if isAdmin()||(isApprovedSchool()&&request.auth.uid==resource.data.schoolId);}
- match /mcqTests/{testId}{allow create:if isApprovedSchool()&&request.resource.data.schoolId==request.auth.uid;allow read:if signedIn()&&(isAdmin()||(userData().role=='student'&&userData().schoolId==resource.data.schoolId)||(isApprovedSchool()&&request.auth.uid==resource.data.schoolId));allow update,delete:if isAdmin()||(isApprovedSchool()&&request.auth.uid==resource.data.schoolId);}
- match /mcqAttempts/{attemptId}{allow create:if signedIn()&&userData().role=='student'&&request.resource.data.studentId==request.auth.uid&&request.resource.data.schoolId==userData().schoolId;allow read:if signedIn()&&(resource.data.studentId==request.auth.uid||isAdmin()||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid));allow update,delete:if isAdmin();}
- match /attendance/{attendanceId}{allow create,update:if isApprovedSchool()&&request.resource.data.schoolId==request.auth.uid;allow read:if signedIn()&&(isAdmin()||(resource.data.studentId==request.auth.uid)||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid));allow delete:if isAdmin()||(isApprovedSchool()&&resource.data.schoolId==request.auth.uid);}
- match /coupons/{couponId}{allow read:if signedIn();allow create,update,delete:if isAdmin();} match /schoolCodes/{code}{allow read:if signedIn();allow create,update,delete:if isAdmin();}
-}}
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function me() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function admin() { return signedIn() && me().role == 'admin'; }
+    function school() { return signedIn() && me().role == 'school' && me().schoolApproved == true && get(/databases/$(database)/documents/schoolApprovals/$(request.auth.uid)).data.approved == true; }
+    function activeMember(sid, uid, role) {
+      return exists(/databases/$(database)/documents/memberships/$(sid+'_'+uid)
+        ) && get(/databases/$(database)/documents/memberships/$(sid+'_'+uid)).data.active == true
+        && get(/databases/$(database)/documents/memberships/$(sid+'_'+uid)).data.role == role;
+    }
+    function connected(sid) {
+      return signedIn() && ((school() && request.auth.uid == sid)
+        || (me().role in ['student','teacher'] && me().get('schoolId','') == sid
+          && me().get('schoolJoinStatus','') == 'connected'
+          && activeMember(sid, request.auth.uid, me().role)
+          && get(/databases/$(database)/documents/schoolApprovals/$(sid)).data.approved == true
+          && get(/databases/$(database)/documents/users/$(sid)).data.role == 'school'
+          && get(/databases/$(database)/documents/users/$(sid)).data.schoolApproved == true));
+    }
+    function teacher(sid) { return connected(sid) && (school() || me().role == 'teacher'); }
+    function connectedStudent(sid, uid) {
+      let student = get(/databases/$(database)/documents/users/$(uid)).data;
+      return student.role == 'student' && student.schoolId == sid
+        && student.schoolJoinStatus == 'connected' && activeMember(sid, uid, 'student');
+    }
+    function gradeFor(p) {
+      return p >= 90 ? 'A+' : p >= 80 ? 'A' : p >= 70 ? 'B+' : p >= 60 ? 'B' : p >= 50 ? 'C' : p >= 33 ? 'D' : 'F';
+    }
+    function approvedSchoolId(sid) {
+      return get(/databases/$(database)/documents/users/$(sid)).data.role == 'school'
+        && get(/databases/$(database)/documents/users/$(sid)).data.schoolApproved == true
+        && get(/databases/$(database)/documents/schoolApprovals/$(sid)).data.approved == true;
+    }
+    function memberProfileAfter(sid, uid, role) {
+      return getAfter(/databases/$(database)/documents/users/$(uid)).data.schoolId == sid
+        && getAfter(/databases/$(database)/documents/users/$(uid)).data.schoolJoinStatus == 'connected'
+        && getAfter(/databases/$(database)/documents/users/$(uid)).data.role == role;
+    }
+    function validJoinRequest(sid, uid) {
+      return signedIn() && uid == request.auth.uid && me().role in ['student','teacher']
+        && request.resource.data.keys().hasOnly(['schoolId','schoolName','studentId','studentName','studentEmail','className','memberRole','schoolCode','status','createdAt'])
+        && request.resource.data.schoolId == sid && request.resource.data.studentId == uid
+        && request.resource.data.memberRole == me().role
+        && request.resource.data.studentName == me().name
+        && request.resource.data.className == me().get('className','')
+        && request.resource.data.status == 'pending'
+        && request.resource.data.schoolCode is string
+        && get(/databases/$(database)/documents/schoolCodes/$(request.resource.data.schoolCode)).data.schoolId == sid
+        && get(/databases/$(database)/documents/schoolCodes/$(request.resource.data.schoolCode)).data.active == true
+        && approvedSchoolId(sid)
+        && getAfter(/databases/$(database)/documents/users/$(uid)).data.schoolJoinStatus == 'pending'
+        && getAfter(/databases/$(database)/documents/users/$(uid)).data.pendingSchoolId == sid
+        && getAfter(/databases/$(database)/documents/users/$(uid)).data.pendingSchoolCode == request.resource.data.schoolCode;
+    }
+    function ownsConversation(id) {
+      let c = get(/databases/$(database)/documents/conversations/$(id)).data;
+      return signedIn() && request.auth.uid in c.members && connected(c.schoolId);
+    }
+    match /users/{uid} {
+      allow create: if signedIn() && uid == request.auth.uid
+        && request.resource.data.uid == uid
+        && request.resource.data.role in ['student','school','teacher']
+        && request.resource.data.schoolApproved == (request.resource.data.role != 'school')
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 200
+        && request.resource.data.email is string && request.resource.data.email.size() <= 320
+        && request.resource.data.className is string && request.resource.data.className.size() <= 80
+        && request.resource.data.schoolName is string && request.resource.data.schoolName.size() <= 200
+        && request.resource.data.contactNumber is string && request.resource.data.contactNumber.size() <= 30
+        && request.resource.data.address is string && request.resource.data.address.size() <= 1000
+        && request.resource.data.keys().hasOnly(['uid','name','email','role','schoolName','className','contactNumber','address','schoolApproved','createdAt']);
+      allow get: if signedIn() && (uid == request.auth.uid || admin()
+        || (resource.data.get('role','') == 'school' && resource.data.get('schoolApproved',false) == true
+          && get(/databases/$(database)/documents/schoolApprovals/$(uid)).data.approved == true)
+        || (school() && resource.data.get('pendingSchoolId','') == request.auth.uid && resource.data.get('role','') in ['student','teacher'])
+        || (school() && resource.data.get('schoolId','') == request.auth.uid
+          && resource.data.get('schoolJoinStatus','') == 'connected'
+          && activeMember(request.auth.uid, uid, resource.data.get('role','')))
+        || (teacher(me().get('schoolId','')) && resource.data.get('schoolId','') == me().get('schoolId','')
+          && resource.data.get('schoolJoinStatus','') == 'connected'
+          && activeMember(me().get('schoolId',''), uid, resource.data.get('role',''))));
+      allow list: if admin() || (school() && resource.data.get('schoolId','') == request.auth.uid
+          && resource.data.get('schoolJoinStatus','') == 'connected'
+          && activeMember(request.auth.uid, resource.data.get('uid',''), resource.data.get('role','')))
+        || (teacher(me().get('schoolId','')) && resource.data.get('schoolId','') == me().get('schoolId','')
+          && resource.data.get('schoolJoinStatus','') == 'connected'
+          && activeMember(me().get('schoolId',''), resource.data.get('uid',''), resource.data.get('role','')));
+      allow update: if admin() || (signedIn() && uid == request.auth.uid
+        && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','className','phone','dateOfBirth','gender','profileUpdatedAt','profilePhotoUrl','fcmToken','fcmTokenUpdatedAt'])
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['schoolJoinStatus','pendingSchoolId','pendingSchoolCode'])
+            && request.resource.data.schoolJoinStatus == 'pending'
+            && request.resource.data.pendingSchoolId is string
+            && request.resource.data.pendingSchoolCode is string
+            && existsAfter(/databases/$(database)/documents/schoolJoinRequests/$(request.resource.data.pendingSchoolId+'_'+uid)))
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['schoolJoinStatus','pendingSchoolId','pendingSchoolCode'])
+            && resource.data.schoolJoinStatus == 'pending'
+            && request.resource.data.schoolJoinStatus in ['', 'connected']
+            && request.resource.data.pendingSchoolId == '' && request.resource.data.pendingSchoolCode == ''))
+        || (school() && resource.data.pendingSchoolId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['schoolId','schoolName','schoolCode','schoolJoinStatus','schoolJoinedAt','pendingSchoolId','pendingSchoolCode'])
+          && request.resource.data.pendingSchoolId == '' && request.resource.data.pendingSchoolCode == ''
+          && getAfter(/databases/$(database)/documents/schoolJoinRequests/$(request.auth.uid+'_'+uid)).data.status in ['approved','rejected']
+          && ((getAfter(/databases/$(database)/documents/schoolJoinRequests/$(request.auth.uid+'_'+uid)).data.status == 'approved'
+              && request.resource.data.schoolId == request.auth.uid && request.resource.data.schoolJoinStatus == 'connected')
+            || (getAfter(/databases/$(database)/documents/schoolJoinRequests/$(request.auth.uid+'_'+uid)).data.status == 'rejected'
+              && request.resource.data.schoolJoinStatus == 'rejected')))
+        || (school() && resource.data.schoolId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['schoolId','schoolName','schoolCode','schoolJoinStatus','pendingSchoolId','pendingSchoolCode'])
+          && request.resource.data.schoolId == '' && request.resource.data.schoolJoinStatus == ''
+          && getAfter(/databases/$(database)/documents/memberships/$(request.auth.uid+'_'+uid)).data.active == false)
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 200
+        && request.resource.data.get('className','') is string && request.resource.data.get('className','').size() <= 80
+        && request.resource.data.get('phone','') is string && request.resource.data.get('phone','').size() <= 30
+        && request.resource.data.get('dateOfBirth','') is string && request.resource.data.get('dateOfBirth','').size() <= 30
+        && request.resource.data.get('gender','') is string && request.resource.data.get('gender','').size() <= 50
+        && request.resource.data.get('fcmToken','') is string && request.resource.data.get('fcmToken','').size() <= 4096
+        && (!('profilePhotoUrl' in request.resource.data) || request.resource.data.profilePhotoUrl.matches('https://firebasestorage.googleapis.com/.*')));
+    }
+    match /schoolCodes/{code} { allow get: if signedIn(); allow list,write: if admin(); }
+    match /schoolApprovals/{id} { allow get: if signedIn(); allow list,write: if admin(); }
+    match /memberships/{id} {
+      allow get: if signedIn() && (admin() || id.matches('.*_'+request.auth.uid+'$') || resource.data.get('uid','') == request.auth.uid
+        || (school() && resource.data.get('schoolId','') == request.auth.uid));
+      allow list: if (school() && resource.data.schoolId == request.auth.uid && resource.data.active == true)
+        || (teacher(resource.data.schoolId) && resource.data.schoolId == me().get('schoolId','') && resource.data.active == true);
+      allow create: if admin() || (school() && request.resource.data.keys().hasOnly(['uid','schoolId','role','active','approvedBy','createdAt'])
+        && request.resource.data.uid is string && request.resource.data.schoolId == request.auth.uid
+        && request.resource.data.active == true && request.resource.data.approvedBy == request.auth.uid
+        && request.resource.data.role in ['student','teacher']
+        && memberProfileAfter(request.auth.uid, request.resource.data.uid, request.resource.data.role)
+        && getAfter(/databases/$(database)/documents/schoolJoinRequests/$(request.auth.uid+'_'+request.resource.data.uid)).data.status == 'approved');
+      allow update: if admin() || (school() && resource.data.schoolId == request.auth.uid
+        && request.resource.data.schoolId == request.auth.uid && request.resource.data.active == false
+        && request.resource.data.role == resource.data.role
+        && getAfter(/databases/$(database)/documents/users/$(resource.data.uid)).data.schoolId == ''
+        && getAfter(/databases/$(database)/documents/users/$(resource.data.uid)).data.schoolJoinStatus == '')
+        || (school() && resource.data.schoolId == request.auth.uid && resource.data.active == false
+          && request.resource.data.keys().hasOnly(['uid','schoolId','role','active','approvedBy','createdAt'])
+          && request.resource.data.active == true && request.resource.data.approvedBy == request.auth.uid
+          && memberProfileAfter(request.auth.uid, resource.data.uid, resource.data.role)
+          && getAfter(/databases/$(database)/documents/schoolJoinRequests/$(request.auth.uid+'_'+resource.data.uid)).data.status == 'approved');
+    }
+    match /schoolJoinRequests/{id} {
+      allow get: if signedIn() && (admin() || id.matches('.*_'+request.auth.uid+'$') || resource.data.studentId == request.auth.uid || (school() && resource.data.schoolId == request.auth.uid));
+      allow list: if signedIn() && (admin() || resource.data.studentId == request.auth.uid || (school() && resource.data.schoolId == request.auth.uid));
+      allow create: if validJoinRequest(request.resource.data.schoolId, request.auth.uid);
+      allow update: if signedIn() && (
+        (resource.data.studentId == request.auth.uid && resource.data.status in ['rejected','cancelled','approved']
+          && resource.data.schoolId == request.resource.data.schoolId
+          && resource.data.studentId == request.resource.data.studentId
+          && validJoinRequest(resource.data.schoolId, request.auth.uid))
+        || (resource.data.studentId == request.auth.uid && resource.data.status == 'pending'
+          && request.resource.data.status == 'cancelled'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewedAt'])
+          && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.schoolJoinStatus in ['', 'connected']
+          && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.pendingSchoolId == '')
+        || (school() && resource.data.schoolId == request.auth.uid && resource.data.status == 'pending'
+          && request.resource.data.status in ['approved','rejected']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewedAt'])
+          && getAfter(/databases/$(database)/documents/users/$(resource.data.studentId)).data.pendingSchoolId == ''
+          && getAfter(/databases/$(database)/documents/users/$(resource.data.studentId)).data.schoolJoinStatus == (request.resource.data.status == 'approved' ? 'connected' : 'rejected')
+          && (request.resource.data.status != 'approved'
+            || (memberProfileAfter(request.auth.uid, resource.data.studentId, resource.data.memberRole)
+              && getAfter(/databases/$(database)/documents/memberships/$(request.auth.uid+'_'+resource.data.studentId)).data.active == true))));
+    }
+    match /results/{id} {
+      allow read,delete: if signedIn() && (resource.data.userId == request.auth.uid || admin());
+      // Self-entered calculator history is private and cannot be presented as a school-issued result.
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid
+        && request.resource.data.personal == true
+        && request.resource.data.keys().hasOnly(['userId','personal','exam','subjects','total','obtained','percentage','grade','result','createdAt'])
+        && request.resource.data.exam is string && request.resource.data.exam.size() > 0 && request.resource.data.exam.size() <= 120
+        && request.resource.data.subjects is list && request.resource.data.subjects.size() > 0 && request.resource.data.subjects.size() <= 30
+        && request.resource.data.total is int && request.resource.data.total > 0 && request.resource.data.total <= 300000
+        && request.resource.data.obtained is int && request.resource.data.obtained >= 0 && request.resource.data.obtained <= request.resource.data.total
+        && request.resource.data.percentage is number && request.resource.data.percentage >= 0 && request.resource.data.percentage <= 100
+        && request.resource.data.grade in ['A+','A','B+','B','C','D','F']
+        && request.resource.data.result in ['PASS','FAIL'];
+    }
+    match /schoolResults/{id} {
+      allow read: if signedIn() && (resource.data.studentId == request.auth.uid || teacher(resource.data.schoolId) || admin());
+      allow delete: if teacher(resource.data.schoolId) || admin();
+      allow create: if teacher(request.resource.data.schoolId)
+        && request.resource.data.issuerUid == request.auth.uid
+        && connectedStudent(request.resource.data.schoolId, request.resource.data.studentId)
+        && request.resource.data.keys().hasOnly(['schoolId','issuerUid','studentId','studentName','exam','subject','obtained','total','passMarks','percentage','grade','result','published','createdAt'])
+        && request.resource.data.studentName == get(/databases/$(database)/documents/users/$(request.resource.data.studentId)).data.name
+        && request.resource.data.exam is string && request.resource.data.exam.size() > 0 && request.resource.data.exam.size() <= 120
+        && request.resource.data.subject is string && request.resource.data.subject.size() > 0 && request.resource.data.subject.size() <= 80
+        && request.resource.data.obtained is int && request.resource.data.total is int
+        && request.resource.data.total > 0 && request.resource.data.total <= 10000
+        && request.resource.data.obtained >= 0 && request.resource.data.obtained <= request.resource.data.total
+        && request.resource.data.passMarks is int && request.resource.data.passMarks >= 0 && request.resource.data.passMarks <= request.resource.data.total
+        && request.resource.data.percentage is number
+        && request.resource.data.percentage >= request.resource.data.obtained * 100 / request.resource.data.total - 0.01
+        && request.resource.data.percentage <= request.resource.data.obtained * 100 / request.resource.data.total + 0.01
+        && request.resource.data.grade == gradeFor(request.resource.data.percentage)
+        && request.resource.data.result == (request.resource.data.obtained >= request.resource.data.passMarks ? 'PASS' : 'FAIL')
+        && request.resource.data.published == true && request.resource.data.createdAt is int;
+    }
+    match /attendance/{id} {
+      allow read: if signedIn() && (resource.data.studentId == request.auth.uid || teacher(resource.data.schoolId) || admin());
+      allow create, update: if teacher(request.resource.data.schoolId)
+        && request.resource.data.issuerUid == request.auth.uid
+        && connectedStudent(request.resource.data.schoolId, request.resource.data.studentId)
+        && request.resource.data.keys().hasOnly(['schoolId','studentId','studentName','date','present','updatedAt','issuerUid'])
+        && request.resource.data.studentName == get(/databases/$(database)/documents/users/$(request.resource.data.studentId)).data.name
+        && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.present is bool && request.resource.data.updatedAt is int;
+    }
+    match /notices/{id} {
+      allow read: if connected(resource.data.schoolId) || admin();
+      allow delete: if teacher(resource.data.schoolId) || admin();
+      allow create: if teacher(request.resource.data.schoolId)
+        && request.resource.data.issuerUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['schoolId','issuerUid','title','message','targetClass','important','active','createdAt'])
+        && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 120
+        && request.resource.data.message is string && request.resource.data.message.size() > 0 && request.resource.data.message.size() <= 4000
+        && request.resource.data.targetClass is string && request.resource.data.targetClass.size() <= 80
+        && request.resource.data.important is bool && request.resource.data.active == true
+        && request.resource.data.createdAt is int;
+    }
+    // Student clients receive sanitized questions only through callable endpoints.
+    match /mcqTests/{id} { allow read: if teacher(resource.data.schoolId) || admin(); }
+    match /mcqKeys/{id} { allow read: if teacher(resource.data.schoolId) || admin(); }
+    match /mcqAttempts/{id} { allow read: if signedIn() && (resource.data.studentId == request.auth.uid || teacher(resource.data.schoolId) || admin()); }
+    match /marksheetVerifications/{id} { allow read: if signedIn() && (resource.data.issuerUid == request.auth.uid || admin()); }
+    match /conversations/{id} {
+      allow read: if signedIn() && request.auth.uid in resource.data.members && connected(resource.data.schoolId);
+      match /messages/{messageId} { allow read: if ownsConversation(id); }
+    }
+    match /coupons/{id} { allow get: if signedIn(); allow list,write: if admin(); }
+    match /proEntitlements/{id} { allow read: if signedIn() && (id == request.auth.uid || admin()); }
+    match /plans/{id} { allow read: if signedIn(); allow write: if admin(); }
+    match /proOrders/{id} { allow read: if signedIn() && (resource.data.uid == request.auth.uid || admin()); }
+    match /couponRedemptions/{id} { allow read: if signedIn() && (resource.data.uid == request.auth.uid || admin()); }
+    match /membershipAudit/{id} { allow read: if admin(); }
+    match /{document=**} { allow read,write: if false; }
+  }
+}

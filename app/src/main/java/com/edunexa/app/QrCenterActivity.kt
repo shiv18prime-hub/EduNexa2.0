@@ -15,13 +15,13 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 
-class QrCenterActivity : AppCompatActivity() {
+class QrCenterActivity : EduActivity() {
     private val db = FirebaseFirestore.getInstance(); private val auth = FirebaseAuth.getInstance()
     private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
         val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;gravity=Gravity.CENTER_HORIZONTAL;setPadding(dp(20),dp(24),dp(20),dp(24));setBackgroundColor(Color.parseColor("#F6F7FC"))}
-        root.addView(TextView(this).apply{text="EduNexa QR Center";textSize=27f;setTypeface(typeface,1);setTextColor(Color.parseColor("#20243A"))})
+        root.addView(TextView(this).apply{text="EduNexa QR Center";textSize=27f;setTypeface(typeface, android.graphics.Typeface.BOLD);setTextColor(Color.parseColor("#20243A"))})
         val status=TextView(this).apply{text="Loading account…";gravity=Gravity.CENTER;setPadding(0,dp(8),0,dp(12));setTextColor(Color.parseColor("#626A80"))};root.addView(status)
         val image=ImageView(this).apply{adjustViewBounds=true};root.addView(image,LinearLayout.LayoutParams(dp(270),dp(270)))
         val generate=Button(this).apply{text="Generate My Verified QR";isAllCaps=false};root.addView(generate,LinearLayout.LayoutParams(-1,dp(56)).apply{setMargins(0,dp(14),0,0)})
@@ -35,7 +35,7 @@ class QrCenterActivity : AppCompatActivity() {
         val uid=auth.currentUser?.uid?:return
         db.collection("users").document(uid).get().addOnSuccessListener{d->
             when(d.getString("role")){
-                "school"->{if(d.getBoolean("schoolApproved")!=true){status.text="Admin approval required before school QR can be generated";return@addOnSuccessListener};val code=(d.getString("schoolCode")?:"EDU-${uid.take(8).uppercase()}");val data=hashMapOf<String,Any>("schoolId" to uid,"active" to true,"updatedAt" to FieldValue.serverTimestamp());db.collection("schoolCodes").document(code).set(data).addOnSuccessListener{db.collection("users").document(uid).update("schoolCode",code);showQr("EDUNEXA:SCHOOL:$code",image);status.text="Verified School QR • $code\nStudents can scan this to send a connection request."}.addOnFailureListener{status.text=it.message?:"Could not activate school QR"}}
+                "school"->{if(d.getBoolean("schoolApproved")!=true){status.text="Admin approval required before school QR can be generated";return@addOnSuccessListener};val code=d.getString("schoolCode")?.takeIf{it.isNotBlank()}?:run{status.text="School code has not been assigned yet. Ask the administrator to approve the school.";return@addOnSuccessListener};db.collection("schoolCodes").document(code).get().addOnSuccessListener{schoolCode->if(schoolCode.getString("schoolId")==uid&&schoolCode.getBoolean("active")==true){showQr("EDUNEXA:SCHOOL:$code",image);status.text="Verified School QR • $code\nStudents can scan this to send a connection request."}else status.text="School code is inactive. Contact the administrator."}.addOnFailureListener{status.text=it.message?:"Could not verify school code"}}
                 "student"->{showQr("EDUNEXA:STUDENT:$uid",image);status.text="Student identification QR\nUse only with trusted EduNexa school/admin screens."}
                 else->status.text="QR generation is available for Student and School accounts"
             }

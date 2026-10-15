@@ -1,0 +1,6 @@
+<resources>
+    <style name="Theme.EduNexa" parent="Theme.EduNexa.Base">
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>
