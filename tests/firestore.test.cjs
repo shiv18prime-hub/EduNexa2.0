@@ -4,6 +4,21 @@ test('registration roles cannot inject admin approval or membership',async()=>{c
 test('profile editing works; direct role, pro, result, membership and attendance writes fail',async()=>{await assertSucceeds(updateDoc(doc(db('s'),'users','s'),{name:'Edited'}));for(const v of [{role:'admin'},{pro:true},{schoolId:'other'}])await assertFails(updateDoc(doc(db('s'),'users','s'),v));for(const col of ['results','schoolJoinRequests','attendance','mcqAttempts','mcqSessions','marksheetVerifications','schoolApprovals','memberships','proEntitlements'])await assertFails(setDoc(doc(db('s'),col,'fake'),{userId:'s',studentId:'s',schoolId:'school',score:100,issuerApproved:true}));});
 test('student cannot read answer keys or legacy inline keys; issuer can read',async()=>{await assertFails(getDoc(doc(db('s'),'mcqKeys','test')));await assertFails(getDoc(doc(db('s'),'mcqTests','test')));await assertSucceeds(getDoc(doc(db('school'),'mcqTests','test')));await assertFails(getDoc(doc(db('other'),'mcqTests','test')));});
 test('school code and approved school profile are readable; student and outsider rosters stay private',async()=>{await assertSucceeds(getDoc(doc(db('s'),'schoolCodes','CODE')));await assertSucceeds(getDoc(doc(db('s'),'users','school')));await assertFails(getDoc(doc(db('other'),'users','s')));await assertSucceeds(getDocs(query(collection(db('school'),'memberships'),where('schoolId','==','school'),where('active','==',true),where('role','==','student'))));});
+test('approved school members can read the minimal active roster and safely publish records',async()=>{
+  await assertSucceeds(getDocs(query(collection(db('teacher'),'memberships'),where('schoolId','==','school'),where('active','==',true))));
+  await assertFails(getDocs(query(collection(db('other'),'memberships'),where('schoolId','==','school'),where('active','==',true))));
+  const result={schoolId:'school',issuerUid:'school',studentId:'s',studentName:'Student',exam:'Term 1',subject:'Math',obtained:80,total:100,passMarks:33,percentage:80,grade:'A',result:'PASS',published:true,createdAt:1};
+  await assertSucceeds(setDoc(doc(db('school'),'schoolResults','ok'),result));
+  await assertSucceeds(setDoc(doc(db('teacher'),'schoolResults','teacher-ok'),{...result,issuerUid:'teacher'}));
+  await assertFails(setDoc(doc(db('other'),'schoolResults','outside'),result));
+  await assertFails(setDoc(doc(db('school'),'schoolResults','forged'),{...result,percentage:99,grade:'A+'}));
+  const date='2026-10-15',attendance={schoolId:'school',studentId:'s',studentName:'Student',date,present:true,updatedAt:1,issuerUid:'teacher'};
+  await assertSucceeds(setDoc(doc(db('teacher'),'attendance',`school_s_${date}`),attendance));
+  await assertFails(setDoc(doc(db('other'),'attendance',`school_s_${date}`),attendance));
+  const notice={schoolId:'school',issuerUid:'teacher',title:'Exam week',message:'Bring your books.',targetClass:'8',important:false,active:true,createdAt:1};
+  await assertSucceeds(setDoc(doc(db('teacher'),'notices','notice'),notice));
+  await assertFails(setDoc(doc(db('other'),'notices','forged'),notice));
+});
 test('Spark school join and approval require paired transactional writes',async()=>{
   await env.withSecurityRulesDisabled(async c=>setDoc(doc(c.firestore(),'users','joiner'),{uid:'joiner',role:'student',schoolApproved:true,name:'Joiner',email:'j@example.test',className:'8',schoolName:'',schoolJoinStatus:''}));
   const student=db('joiner'),school=db('school'),requestRef=doc(student,'schoolJoinRequests','school_joiner'),schoolRequestRef=doc(school,'schoolJoinRequests','school_joiner'),profileRef=doc(student,'users','joiner');

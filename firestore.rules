@@ -20,6 +20,14 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/users/$(sid)).data.schoolApproved == true));
     }
     function teacher(sid) { return connected(sid) && (school() || me().role == 'teacher'); }
+    function connectedStudent(sid, uid) {
+      let student = get(/databases/$(database)/documents/users/$(uid)).data;
+      return student.role == 'student' && student.schoolId == sid
+        && student.schoolJoinStatus == 'connected' && activeMember(sid, uid, 'student');
+    }
+    function gradeFor(p) {
+      return p >= 90 ? 'A+' : p >= 80 ? 'A' : p >= 70 ? 'B+' : p >= 60 ? 'B' : p >= 50 ? 'C' : p >= 33 ? 'D' : 'F';
+    }
     function approvedSchoolId(sid) {
       return get(/databases/$(database)/documents/users/$(sid)).data.role == 'school'
         && get(/databases/$(database)/documents/users/$(sid)).data.schoolApproved == true
@@ -114,7 +122,8 @@ service cloud.firestore {
     match /memberships/{id} {
       allow get: if signedIn() && (admin() || id.matches('.*_'+request.auth.uid+'$') || resource.data.get('uid','') == request.auth.uid
         || (school() && resource.data.get('schoolId','') == request.auth.uid));
-      allow list: if school() && resource.data.schoolId == request.auth.uid && resource.data.active == true;
+      allow list: if (school() && resource.data.schoolId == request.auth.uid && resource.data.active == true)
+        || (teacher(resource.data.schoolId) && resource.data.schoolId == me().get('schoolId','') && resource.data.active == true);
       allow create: if admin() || (school() && request.resource.data.keys().hasOnly(['uid','schoolId','role','active','approvedBy','createdAt'])
         && request.resource.data.uid is string && request.resource.data.schoolId == request.auth.uid
         && request.resource.data.active == true && request.resource.data.approvedBy == request.auth.uid
@@ -169,9 +178,49 @@ service cloud.firestore {
         && request.resource.data.grade in ['A+','A','B+','B','C','D','F']
         && request.resource.data.result in ['PASS','FAIL'];
     }
-    match /schoolResults/{id} { allow read: if signedIn() && (resource.data.studentId == request.auth.uid || teacher(resource.data.schoolId) || admin()); allow delete: if teacher(resource.data.schoolId) || admin(); }
-    match /attendance/{id} { allow read: if signedIn() && (resource.data.studentId == request.auth.uid || teacher(resource.data.schoolId) || admin()); }
-    match /notices/{id} { allow read: if connected(resource.data.schoolId) || admin(); allow delete: if teacher(resource.data.schoolId) || admin(); }
+    match /schoolResults/{id} {
+      allow read: if signedIn() && (resource.data.studentId == request.auth.uid || teacher(resource.data.schoolId) || admin());
+      allow delete: if teacher(resource.data.schoolId) || admin();
+      allow create: if teacher(request.resource.data.schoolId)
+        && request.resource.data.issuerUid == request.auth.uid
+        && connectedStudent(request.resource.data.schoolId, request.resource.data.studentId)
+        && request.resource.data.keys().hasOnly(['schoolId','issuerUid','studentId','studentName','exam','subject','obtained','total','passMarks','percentage','grade','result','published','createdAt'])
+        && request.resource.data.studentName == get(/databases/$(database)/documents/users/$(request.resource.data.studentId)).data.name
+        && request.resource.data.exam is string && request.resource.data.exam.size() > 0 && request.resource.data.exam.size() <= 120
+        && request.resource.data.subject is string && request.resource.data.subject.size() > 0 && request.resource.data.subject.size() <= 80
+        && request.resource.data.obtained is int && request.resource.data.total is int
+        && request.resource.data.total > 0 && request.resource.data.total <= 10000
+        && request.resource.data.obtained >= 0 && request.resource.data.obtained <= request.resource.data.total
+        && request.resource.data.passMarks is int && request.resource.data.passMarks >= 0 && request.resource.data.passMarks <= request.resource.data.total
+        && request.resource.data.percentage is number
+        && request.resource.data.percentage >= request.resource.data.obtained * 100 / request.resource.data.total - 0.01
+        && request.resource.data.percentage <= request.resource.data.obtained * 100 / request.resource.data.total + 0.01
+        && request.resource.data.grade == gradeFor(request.resource.data.percentage)
+        && request.resource.data.result == (request.resource.data.obtained >= request.resource.data.passMarks ? 'PASS' : 'FAIL')
+        && request.resource.data.published == true && request.resource.data.createdAt is int;
+    }
+    match /attendance/{id} {
+      allow read: if signedIn() && (resource.data.studentId == request.auth.uid || teacher(resource.data.schoolId) || admin());
+      allow create, update: if teacher(request.resource.data.schoolId)
+        && request.resource.data.issuerUid == request.auth.uid
+        && connectedStudent(request.resource.data.schoolId, request.resource.data.studentId)
+        && request.resource.data.keys().hasOnly(['schoolId','studentId','studentName','date','present','updatedAt','issuerUid'])
+        && request.resource.data.studentName == get(/databases/$(database)/documents/users/$(request.resource.data.studentId)).data.name
+        && request.resource.data.date is string && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.present is bool && request.resource.data.updatedAt is int;
+    }
+    match /notices/{id} {
+      allow read: if connected(resource.data.schoolId) || admin();
+      allow delete: if teacher(resource.data.schoolId) || admin();
+      allow create: if teacher(request.resource.data.schoolId)
+        && request.resource.data.issuerUid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['schoolId','issuerUid','title','message','targetClass','important','active','createdAt'])
+        && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 120
+        && request.resource.data.message is string && request.resource.data.message.size() > 0 && request.resource.data.message.size() <= 4000
+        && request.resource.data.targetClass is string && request.resource.data.targetClass.size() <= 80
+        && request.resource.data.important is bool && request.resource.data.active == true
+        && request.resource.data.createdAt is int;
+    }
     // Student clients receive sanitized questions only through callable endpoints.
     match /mcqTests/{id} { allow read: if teacher(resource.data.schoolId) || admin(); }
     match /mcqKeys/{id} { allow read: if teacher(resource.data.schoolId) || admin(); }
