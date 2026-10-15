@@ -11,6 +11,9 @@ The script validates that account, deploys only Firestore rules/indexes, authori
 the existing web domain and grants that selected account the admin role.
 It does not deploy Functions or Storage, or change billing. No Blaze upgrade is
 needed for this foundation setup. Sign out/sign in after the admin role is granted.
-The current APK/web still need backend changes for full use on Spark: see the
-feature-status table in DEPLOYMENT.md. This setup alone does not activate school
-workflows, dashboard, result saving, tests, chat, coupons or cloud photo uploads.
+The current Android/web source includes Spark-native dashboards, personal result
+history, school membership workflows and guarded school result/attendance/notice
+publishing. Update the client and deploy the branch Firestore rules before using
+those features. This setup does not enable callable timed tests, chat, Pro/coupons,
+marksheet services or cloud photo uploads; those still require Cloud Functions or
+Storage. See the feature-status table in DEPLOYMENT.md. This is not full app activation.
