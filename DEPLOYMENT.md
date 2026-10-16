@@ -6,12 +6,9 @@ All code targets the existing `student-result-pro` Firebase project and Android 
 
 Download `EduNexa-debug-apk` from a successful **push** or manual workflow run only after its OAuth signing check passes. Pull-request runs validate compilation/tests/lint and do not publish an APK. Earlier PR APKs used an unregistered cached key and displayed version 2.0.0.
 
-The 2.0.1 patch verifies the finished APK's signature with Android SDK `apksigner`, checks its actual package and SHA-1 against the supplied Android OAuth client, and checks its embedded web client ID before permitting an APK upload. The latest main workflow (#169, 2026-10-16) built and linted successfully, but withheld the APK because the current cached signing key is not registered. Register these fingerprints for Android app `com.edunexa.app` in Firebase Console → Project settings → Your apps, then download the refreshed `google-services.json` into `app/google-services.json` and push it to GitHub:
+The 2.0.1 patch verifies the finished APK's signature with Android SDK `apksigner`, checks its actual package and SHA-1 against the supplied Android OAuth client, and checks its embedded web client ID before permitting an APK upload. The Firebase app config now contains the current registered SHA-1/SHA-256 fingerprints for Android app `com.edunexa.app`; workflow #175 confirmed that the APK signature and OAuth registration match.
 
-- SHA-1: `C8:C4:4B:42:FD:D2:AC:05:6B:10:4B:ED:59:72:28:18:7C:DF:49:A1`
-- SHA-256: `0B:BA:2C:76:AF:3B:2C:08:14:4F:B1:18:57:65:74:30:E7:55:5E:F3:65:32:4B:E2:D2:A9:08:6F:A5:B9:A3:EA`
-
-After that push, Actions will rerun the signature check and publish the updated debug APK if the Firebase config matches. The previously verified APK uses an older app build.
+The verified debug APK is available as the `EduNexa-debug-apk` artifact in Actions run #175. The artifact is for owner testing, not a production Play Store release.
 
 Android will reject an in-place update between APKs signed by different keys. If the installed copy used the old PR key, replacing it with the verified push APK requires removing that copy; this removes local app data. Export any local files first. Firebase account records remain in the project. Production Google OAuth settings still need owner verification if sign-in fails with the verified APK.
 

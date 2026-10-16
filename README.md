@@ -26,4 +26,4 @@ This prepares the free foundation; it does **not** activate the complete app. Th
 
 Private web address: https://edunexa-school-hub.shiv18prime.chatgpt.site
 
-New feature clients need the matching backend deployment before school services become available. On 2026-10-13 the owner confirmed Google login works on the verified 2.0.1 APK; the signing certificate remains registered in google-services.json.
+New feature clients need the matching Firestore rules deployment before school services become available. The current main-branch APK passes OAuth verification; the owner reports that login and dashboard launch work.
