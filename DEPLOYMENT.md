@@ -12,7 +12,7 @@ Android will reject an in-place update between APKs signed by different keys. If
 
 ## What requires the project owner
 
-This workspace has no authenticated Firebase administration connection. Production functions, Firestore/Storage rules, indexes and web authorized domains have not been deployed from this branch. The configured dashboard endpoint returned HTTP 404 on 2026-10-13. Working Android Google login does not provide administrative deployment credentials.
+The code workspace has no Firebase administration credentials. The owner deployed the Spark Firestore baseline, authorized the web domain and granted the verified administrator from Cloud Shell on 2026-10-16. The new chat/photo rules below still need to be deployed after this change is merged. The configured dashboard endpoint returned HTTP 404 on 2026-10-13.
 
 ### Zero-budget setup (current owner choice)
 
@@ -52,11 +52,12 @@ Setup validates the selected account and web configuration before deploying. Adm
 | Android and web dashboard reads and personal calculator result history | Migrated to private Firestore reads/writes in this branch; deploy updated clients and rules before use |
 | Android and web school approval/code rotation, join requests, review/cancel, active memberships and disconnect | Migrated to admin-only or paired Firestore transactions in this branch; deploy updated clients and rules before use |
 | School result/attendance/notice publishing | Migrated to validation rules and approved-member checks in Firestore; deploy updated rules and clients before use |
-| Timed test scoring, chat sending, Pro grants/redemptions and marksheet registration/verification | Still call Cloud Functions; not activated by Spark setup |
-| Profile photo uploads | Still use Firebase Storage; need a no-billing replacement |
+| School chat text, contacts and history | Firestore rules validate connected school membership, two-party conversations and sender identity; no push notifications or server-side rate limiting |
+| Compressed profile photos (up to 180 KB) | Stored as bounded JPEG data in the owner’s Firestore profile; uses Firestore quota |
+| Timed test scoring, Pro grants/redemptions and marksheet registration/verification | Still call Cloud Functions; not activated by Spark setup |
 | Chat push delivery | Still depends on a deployed notification function |
 
-The complete online app is **not yet available on Spark**. The migrations above are source changes and have not yet been deployed to the owner’s Firebase project or installed as an updated APK/web client. Existing access rules remain restrictive: memberships, answer keys and Pro grants are not made freely client-writable to bypass the missing server. School record writes require approved school/teacher roles and verified student membership. The remaining free-backend work must retain role boundaries and trusted grading. Login success or an admin role grant does not mean every school feature has been activated.
+The complete online app is **not yet available on Spark**. Source changes must be merged and the updated Firestore rules deployed before installing an updated APK or publishing the web build. Existing access rules remain restrictive: memberships, answer keys and Pro grants are not made freely client-writable to bypass the missing server. School record writes require approved school/teacher roles and verified student membership. Timed scoring, Pro and marksheet operations still need a trusted backend. Login success or an admin role grant does not mean every school feature has been activated.
 
 ### Billed backend (optional, not used for the zero-budget setup)
 
@@ -98,49 +99,4 @@ node scripts/migrate-mcq.cjs
 node scripts/migrate-mcq.cjs --apply
 ```
 
-The first command is a dry run. The scripts require Firebase Admin credentials in your authenticated environment (for example Application Default Credentials in Cloud Shell). New tests already use separate answer keys.
-
-## Web login
-
-Private web address: https://edunexa-school-hub.shiv18prime.chatgpt.site
-
-Add `edunexa-school-hub.shiv18prime.chatgpt.site` in Firebase Authentication settings → Authorized domains. Email/password sign-in uses the existing project provider. Google popup login requires this domain authorization. The hosting audience remains owner-private; sharing with schools is a separate deliberate hosting decision.
-
-The guided setup adds this domain automatically. For a separate preview/apply using owner credentials:
-
-```bash
-node scripts/authorize-web.cjs
-node scripts/authorize-web.cjs --apply
-```
-
-## Payments
-
-The paid plan starts disabled. Free/discount coupons and administrator Pro grants use the core backend. For paid checkout, use a Razorpay test account first and keep credentials in Firebase Secret Manager:
-
-```bash
-firebase functions:secrets:set RAZORPAY_KEY_ID --project student-result-pro
-firebase functions:secrets:set RAZORPAY_KEY_SECRET --project student-result-pro
-firebase functions:secrets:set RAZORPAY_WEBHOOK_SECRET --project student-result-pro
-firebase deploy --project student-result-pro --only functions:createProOrder,functions:verifyProPayment,functions:paymentWebhook
-```
-
-Configure Razorpay to send `payment.captured` and `payment.refunded` events to the deployed paymentWebhook URL. Enable automatic capture. Only captured payments with a matching order, currency, amount and owner activate Pro. Repeated callbacks do not extend membership again. Full refunds reverse unused purchased membership time. Do a real provider sandbox test before setting Live credentials and enabling the paid plan in Admin.
-
-No price has been invented or enabled. The administrator chooses rupee price and membership duration in Admin. The default 100% coupon grants 30 days and each account can redeem it once; creation can configure duration and limits.
-
-## Release
-
-Current GitHub artifact is a debug APK for owner testing. A distributable signed release requires an owner-controlled release keystore, backup, SHA registration and a Play policy review for digital subscriptions. Do not publish the debug APK as a production store release.
-
-## Acceptance test
-
-1. Register a student, teacher and school using distinct accounts.
-2. Verify pending/rejected schools cannot publish; approve one as administrator.
-3. Join student and teacher using the active school code; approve or cancel/reject their requests.
-4. Publish results, attendance, notices and a test as school/teacher. Student sees their own academic records and current school's notices.
-5. Submit a timed test; test cross-school denial, retry, attempt limit and late submission.
-6. Upload a profile photo and reopen the same account on another device/web.
-7. Exchange a school message; remove the member and verify message access is revoked.
-8. Redeem a 100% coupon; confirm duplicate redemption fails. Use the provider sandbox for paid Pro and refund.
-9. Register a school marksheet; verify lookup shows only minimal academic summary. Student practice records require Pro and stay clearly labelled practice records.
-10. Test image/PDF export, portrait edges and navigation/keyboard insets on a physical Android phone.
+The first command is a dry run. The scripts require Firebase Admin credentials in your authenticated environment (for example Application Default Credentials in Cl

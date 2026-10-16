@@ -150,37 +150,4 @@ class MainActivity : EduActivity() {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val newName = name.text.toString().trim(); val newClass = cls.text.toString().trim(); val newPhone = phone.text.toString().trim(); val newDob = dob.text.toString().trim(); val newGender = gender.text.toString().trim()
-                if (newName.length < 2) { name.error = "Enter your full name"; return@setOnClickListener }
-                if (newClass.isBlank() && role == "student") { cls.error = "Enter class"; return@setOnClickListener }
-                if (newPhone.isNotBlank() && newPhone.length !in 10..15) { phone.error = "Enter a valid phone number"; return@setOnClickListener }
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
-                val updates = hashMapOf<String, Any>("name" to newName, "className" to newClass, "phone" to newPhone, "dateOfBirth" to newDob, "gender" to newGender, "profileUpdatedAt" to com.google.firebase.firestore.FieldValue.serverTimestamp())
-                db.collection("users").document(uid).update(updates).addOnSuccessListener { Toast.makeText(this, "Profile updated", Toast.LENGTH_SHORT).show(); dialog.dismiss(); showProfile() }.addOnFailureListener { e -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true; Toast.makeText(this, "Could not update profile: ${e.localizedMessage ?: "Try again"}", Toast.LENGTH_LONG).show() }
-            }
-        }
-        dialog.show()
-    }
-
-    private fun showProfile() {
-        selectTab("profile"); content.removeAllViews(); val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(dp(4), dp(4), dp(4), dp(28)) }
-        val profileCard = card(); val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL }
-        box.addView(TextView(this).apply { text = "My Profile"; textSize = 24f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#171A2B")) })
-        profileImage = ImageView(this).apply { setImageResource(R.drawable.edunexa_logo); scaleType = ImageView.ScaleType.CENTER_CROP }; box.addView(profileImage, LinearLayout.LayoutParams(dp(112), dp(112)).apply { setMargins(0, dp(18), 0, dp(8)) })
-
-        box.addView(Button(this).apply { text = "Change Profile Photo"; isAllCaps = false; setOnClickListener { photoPicker.launch(arrayOf("image/*")) } })
-        val info = TextView(this).apply { text = "Loading account…"; textSize = 16f; gravity = Gravity.CENTER; setTextColor(Color.parseColor("#454B60")); setPadding(0, dp(18), 0, dp(8)) }; box.addView(info)
-        box.addView(TextView(this).apply { text = "Account Profile"; textSize = 13f; setTextColor(Color.parseColor("#4338CA")); setBackgroundColor(Color.parseColor("#EEF0FF")); setPadding(dp(14), dp(7), dp(14), dp(7)) })
-        val editBtn = Button(this).apply { text = "✏️  Edit Profile"; isAllCaps = false; isEnabled = false }; box.addView(editBtn, LinearLayout.LayoutParams(-1, dp(54)).apply { setMargins(0, dp(16), 0, 0) })
-        profileCard.addView(box); root.addView(profileCard, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(14)) })
-        auth.currentUser?.uid?.let { uid -> db.collection("users").document(uid).get().addOnSuccessListener { d ->
-            val displayName = d.getString("name") ?: "Student"; val email = d.getString("email") ?: auth.currentUser?.email.orEmpty(); val cls = d.getString("className") ?: "—"; val school = d.getString("schoolName"); val phone = d.getString("phone").orEmpty(); val dob = d.getString("dateOfBirth").orEmpty(); val gender = d.getString("gender").orEmpty()
-            val extra = listOfNotNull(phone.takeIf { it.isNotBlank() }?.let { "Phone: $it" }, dob.takeIf { it.isNotBlank() }?.let { "DOB: $it" }, gender.takeIf { it.isNotBlank() }?.let { "Gender: $it" }).joinToString("\n")
-            info.text = "$displayName\n$email\nClass: $cls${school?.let { "\n$it" } ?: ""}${if (extra.isNotBlank()) "\n$extra" else ""}"
-            d.getString("profilePhotoUrl")?.let { url -> profileImage?.let { com.edunexa.app.data.ProfilePhotos.load(it,url) } }
-            editBtn.isEnabled = true; editBtn.setOnClickListener { editProfile(uid, displayName, if (cls == "—") "" else cls, phone, dob, gender,d.getString("role") ?: "student") }
-        }.addOnFailureListener { info.text = "Account details unavailable\nCheck your internet connection." } }
-        action(root, "🏆", "MCQ History", "Completed tests and scores") { startActivity(Intent(this, McqHistoryActivity::class.java)) }; action(root, "🛠", "EduNexa Tools", "Open all student utility tools") { startActivity(Intent(this, ToolsActivity::class.java)) }
-        root.addView(Button(this).apply { text = "Logout"; isAllCaps = false; setTextColor(Color.parseColor("#B42318")); setOnClickListener { Session.logout(this@MainActivity) } }, LinearLayout.LayoutParams(-1, dp(54)).apply { setMargins(0, dp(8), 0, 0) })
-        content.addView(ScrollView(this).apply { addView(root) })
-    }
-}
+                if (newName.length < 2) { name.error = "Enter your
