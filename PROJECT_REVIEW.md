@@ -14,10 +14,10 @@
 
 ## Validation and remaining activation
 
-The latest main workflow (#166) succeeded on 2026-10-16. Android build, unit tests, lint and Firestore rules tests passed. Its OAuth signing verifier warned and withheld an APK because the workflow cache used an unregistered signing key. This working tree now adds Spark chat and bounded Firestore profile photos; these changes must pass CI and be merged before a new APK can include them.
+Spark chat and bounded Firestore profile photos were merged in PR #4. Main workflow #169 passed Android build, unit tests, lint, Firestore rules tests and web build on 2026-10-16. The OAuth signing verifier withheld an APK because SHA-1 `C8:C4:4B:42:FD:D2:AC:05:6B:10:4B:ED:59:72:28:18:7C:DF:49:A1` is not registered in the checked-in Firebase config. Add its SHA-1/SHA-256, refresh `google-services.json`, and push the file to get the updated APK artifact.
 
 The owner confirmed Google sign-in worked on the verified 2.0.1 APK on 2026-10-13. Browser and physical-device acceptance of the newest source changes are still needed.
 
-The owner has deployed the Spark baseline from Cloud Shell. After this change is merged, deploy the updated Firestore rules/indexes with `bash scripts/deploy-spark.sh`, then update the APK/web client and verify chat and profile photos. This command stays on Firebase Spark and does not deploy Functions or Storage. Timed test scoring, Pro grants/redemption, paid membership and marksheet operations remain dependent on Cloud Functions and are unavailable on the current Spark setup. Keep the selected zero-budget constraint; do not link billing.
+The owner deployed the Spark baseline from Cloud Shell. Deploy the updated Firestore rules/indexes with `bash scripts/deploy-spark.sh`, then install the new APK or republish the web client and verify chat and profile photos. This command stays on Firebase Spark and does not deploy Functions or Storage. Timed test scoring, Pro grants/redemption, paid membership and marksheet operations remain dependent on Cloud Functions and are unavailable on the current Spark setup. Keep the selected zero-budget constraint; do not link billing.
 
 The production dashboard returned HTTP 404 in a check on 2026-10-13. The web Site remains a separate hosted project, so merging GitHub source does not by itself publish the updated web client. See DEPLOYMENT.md for owner activation and acceptance steps.

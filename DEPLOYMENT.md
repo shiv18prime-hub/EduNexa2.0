@@ -1,18 +1,23 @@
 # EduNexa activation
 
-All code targets the existing `student-result-pro` Firebase project and Android package `com.edunexa.app`. The current APK signing SHA-1 is already in the owner-provided google-services.json. On 2026-10-13 the owner confirmed that Google login works with the verified 2.0.1 APK.
+All code targets the existing `student-result-pro` Firebase project and Android package `com.edunexa.app`. On 2026-10-13 the owner confirmed Google login worked with the verified 2.0.1 APK.
 
 ## Choose the verified APK
 
-Download `EduNexa-debug-apk` from a successful **push** or manual workflow run. Pull-request runs validate compilation/tests/lint and publish lint reports only. Earlier PR APKs used a different cached key: `06:49:68:1F:55:D7:2D:EC:5D:F7:EE:AC:0A:35:CF:F2:54:AC:00:9A`, which has no Android OAuth registration in the supplied Firebase config. Earlier PR and push APKs both displayed version 2.0.0.
+Download `EduNexa-debug-apk` from a successful **push** or manual workflow run only after its OAuth signing check passes. Pull-request runs validate compilation/tests/lint and do not publish an APK. Earlier PR APKs used an unregistered cached key and displayed version 2.0.0.
 
-The 2.0.1 patch verifies the finished APK's signature with Android SDK `apksigner`, checks its actual package and SHA-1 against the supplied Android OAuth client, and checks its embedded web client ID before permitting an APK upload. This prevents an unregistered cached key from silently producing a downloadable APK. Current push signing SHA-1: `A3:87:0E:8A:F3:1D:BE:0F:A9:F0:2E:B5:5A:66:BF:C6:BB:2A:38:EA`.
+The 2.0.1 patch verifies the finished APK's signature with Android SDK `apksigner`, checks its actual package and SHA-1 against the supplied Android OAuth client, and checks its embedded web client ID before permitting an APK upload. The latest main workflow (#169, 2026-10-16) built and linted successfully, but withheld the APK because the current cached signing key is not registered. Register these fingerprints for Android app `com.edunexa.app` in Firebase Console → Project settings → Your apps, then download the refreshed `google-services.json` into `app/google-services.json` and push it to GitHub:
+
+- SHA-1: `C8:C4:4B:42:FD:D2:AC:05:6B:10:4B:ED:59:72:28:18:7C:DF:49:A1`
+- SHA-256: `0B:BA:2C:76:AF:3B:2C:08:14:4F:B1:18:57:65:74:30:E7:55:5E:F3:65:32:4B:E2:D2:A9:08:6F:A5:B9:A3:EA`
+
+After that push, Actions will rerun the signature check and publish the updated debug APK if the Firebase config matches. The previously verified APK uses an older app build.
 
 Android will reject an in-place update between APKs signed by different keys. If the installed copy used the old PR key, replacing it with the verified push APK requires removing that copy; this removes local app data. Export any local files first. Firebase account records remain in the project. Production Google OAuth settings still need owner verification if sign-in fails with the verified APK.
 
 ## What requires the project owner
 
-The code workspace has no Firebase administration credentials. The owner deployed the Spark Firestore baseline, authorized the web domain and granted the verified administrator from Cloud Shell on 2026-10-16. The new chat/photo rules below still need to be deployed after this change is merged. The configured dashboard endpoint returned HTTP 404 on 2026-10-13.
+The code workspace has no Firebase administration credentials. The owner deployed the Spark Firestore baseline, authorized the web domain and granted the verified administrator from Cloud Shell on 2026-10-16. The updated chat/photo rules still need to be deployed from the owner's Cloud Shell. The configured dashboard endpoint returned HTTP 404 on 2026-10-13.
 
 ### Zero-budget setup (current owner choice)
 
@@ -20,7 +25,7 @@ The owner confirmed a zero budget on 2026-10-13. Keep `student-result-pro` on **
 
 Default guided setup now deploys **only Firestore rules and indexes**, authorizes the existing web address, and grants an existing verified account the admin role. It never deploys Functions or Storage and never links billing. The Firebase Admin SDK used by the local owner scripts is a client library, not a deployed Cloud Function.
 
-[Open the prepared repository in Google Cloud Shell](https://shell.cloud.google.com/?cloudshell_git_repo=https://github.com/shiv18prime-hub/EduNexa2.0.git&cloudshell_git_branch=fix/auth-school-access&cloudshell_workspace=.&show=terminal&cloudshell_print=scripts/cloud-shell-start.txt), then run:
+[Open the prepared repository in Google Cloud Shell](https://shell.cloud.google.com/?cloudshell_git_repo=https://github.com/shiv18prime-hub/EduNexa2.0.git&cloudshell_git_branch=main&cloudshell_workspace=.&show=terminal&cloudshell_print=scripts/cloud-shell-start.txt), then run:
 
 ```bash
 bash scripts/activate-project.sh --spark
@@ -39,7 +44,7 @@ bash scripts/activate-project.sh --spark --installed --email YOUR_EDUNEXA_EMAIL
 For a Cloud Shell checkout whose plain `git pull` reports `From .`, update from GitHub explicitly before running setup:
 
 ```bash
-git pull --ff-only https://github.com/shiv18prime-hub/EduNexa2.0.git fix/auth-school-access
+git pull --ff-only https://github.com/shiv18prime-hub/EduNexa2.0.git main
 ```
 
 Setup validates the selected account and web configuration before deploying. Admin role and domain changes are applied only after successful Firestore deployment. Errors stop the sequence. It does not probe undeployed Functions or claim full application activation.
@@ -57,7 +62,7 @@ Setup validates the selected account and web configuration before deploying. Adm
 | Timed test scoring, Pro grants/redemptions and marksheet registration/verification | Still call Cloud Functions; not activated by Spark setup |
 | Chat push delivery | Still depends on a deployed notification function |
 
-The complete online app is **not yet available on Spark**. Source changes must be merged and the updated Firestore rules deployed before installing an updated APK or publishing the web build. Existing access rules remain restrictive: memberships, answer keys and Pro grants are not made freely client-writable to bypass the missing server. School record writes require approved school/teacher roles and verified student membership. Timed scoring, Pro and marksheet operations still need a trusted backend. Login success or an admin role grant does not mean every school feature has been activated.
+The updated Spark chat/photo source is merged. Deploy the new Firestore rules before testing it, and rebuild/install the updated APK or republish the separate web site to use the changes. Existing access rules remain restrictive: memberships, answer keys and Pro grants are not made freely client-writable to bypass the missing server. School record writes require approved school/teacher roles and verified student membership. Timed scoring, Pro and marksheet operations still need a trusted backend. Login success or an admin role grant does not mean every school feature has been activated.
 
 ### Billed backend (optional, not used for the zero-budget setup)
 
@@ -67,7 +72,7 @@ An owner who separately chooses billed hosting can explicitly run `bash scripts/
 
 ### Individual commands
 
-In an authenticated terminal or Google Cloud Shell, clone this repository and check out `fix/auth-school-access`. Run:
+In an authenticated terminal or Google Cloud Shell, clone this repository and check out `main`. Run:
 
 ```bash
 bash scripts/deploy-spark.sh
