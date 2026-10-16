@@ -25,6 +25,13 @@ service cloud.firestore {
       return student.role == 'student' && student.schoolId == sid
         && student.schoolJoinStatus == 'connected' && activeMember(sid, uid, 'student');
     }
+    function chatPeer(sid, uid) {
+      return uid == sid ? approvedSchoolId(sid)
+        : get(/databases/$(database)/documents/users/$(uid)).data.schoolId == sid
+          && get(/databases/$(database)/documents/users/$(uid)).data.schoolJoinStatus == 'connected'
+          && get(/databases/$(database)/documents/users/$(uid)).data.role in ['student','teacher']
+          && activeMember(sid, uid, get(/databases/$(database)/documents/users/$(uid)).data.role);
+    }
     function gradeFor(p) {
       return p >= 90 ? 'A+' : p >= 80 ? 'A' : p >= 70 ? 'B+' : p >= 60 ? 'B' : p >= 50 ? 'C' : p >= 33 ? 'D' : 'F';
     }
@@ -86,8 +93,8 @@ service cloud.firestore {
         || (teacher(me().get('schoolId','')) && resource.data.get('schoolId','') == me().get('schoolId','')
           && resource.data.get('schoolJoinStatus','') == 'connected'
           && activeMember(me().get('schoolId',''), resource.data.get('uid',''), resource.data.get('role','')));
-      allow update: if admin() || (signedIn() && uid == request.auth.uid
-        && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','className','phone','dateOfBirth','gender','profileUpdatedAt','profilePhotoUrl','fcmToken','fcmTokenUpdatedAt'])
+      allow update: if admin() || ((signedIn() && uid == request.auth.uid
+        && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','className','phone','dateOfBirth','gender','profileUpdatedAt','profilePhotoUrl','profilePhotoData','fcmToken','fcmTokenUpdatedAt'])
           || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['schoolJoinStatus','pendingSchoolId','pendingSchoolCode'])
             && request.resource.data.schoolJoinStatus == 'pending'
             && request.resource.data.pendingSchoolId is string
@@ -108,26 +115,31 @@ service cloud.firestore {
         || (school() && resource.data.schoolId == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['schoolId','schoolName','schoolCode','schoolJoinStatus','pendingSchoolId','pendingSchoolCode'])
           && request.resource.data.schoolId == '' && request.resource.data.schoolJoinStatus == ''
-          && getAfter(/databases/$(database)/documents/memberships/$(request.auth.uid+'_'+uid)).data.active == false)
+          && getAfter(/databases/$(database)/documents/memberships/$(request.auth.uid+'_'+uid)).data.active == false))
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 200
         && request.resource.data.get('className','') is string && request.resource.data.get('className','').size() <= 80
         && request.resource.data.get('phone','') is string && request.resource.data.get('phone','').size() <= 30
         && request.resource.data.get('dateOfBirth','') is string && request.resource.data.get('dateOfBirth','').size() <= 30
         && request.resource.data.get('gender','') is string && request.resource.data.get('gender','').size() <= 50
         && request.resource.data.get('fcmToken','') is string && request.resource.data.get('fcmToken','').size() <= 4096
-        && (!('profilePhotoUrl' in request.resource.data) || request.resource.data.profilePhotoUrl.matches('https://firebasestorage.googleapis.com/.*')));
+        && (!('profilePhotoUrl' in request.resource.data) || request.resource.data.profilePhotoUrl.matches('https://firebasestorage.googleapis.com/.*'))
+        && (!('profilePhotoData' in request.resource.data) || (request.resource.data.profilePhotoData is string
+          && request.resource.data.profilePhotoData.size() <= 260000
+          && request.resource.data.profilePhotoData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/]+=*$'))));
     }
     match /schoolCodes/{code} { allow get: if signedIn(); allow list,write: if admin(); }
     match /schoolApprovals/{id} { allow get: if signedIn(); allow list,write: if admin(); }
     match /memberships/{id} {
       allow get: if signedIn() && (admin() || id.matches('.*_'+request.auth.uid+'$') || resource.data.get('uid','') == request.auth.uid
         || (school() && resource.data.get('schoolId','') == request.auth.uid));
-      allow list: if (school() && resource.data.schoolId == request.auth.uid && resource.data.active == true)
+      allow list: if (connected(resource.data.schoolId) && resource.data.schoolId == me().get('schoolId', request.auth.uid) && resource.data.active == true)
+        || (school() && resource.data.schoolId == request.auth.uid && resource.data.active == true)
         || (teacher(resource.data.schoolId) && resource.data.schoolId == me().get('schoolId','') && resource.data.active == true);
-      allow create: if admin() || (school() && request.resource.data.keys().hasOnly(['uid','schoolId','role','active','approvedBy','createdAt'])
+      allow create: if admin() || (school() && request.resource.data.keys().hasOnly(['uid','schoolId','role','active','approvedBy','createdAt','name'])
         && request.resource.data.uid is string && request.resource.data.schoolId == request.auth.uid
         && request.resource.data.active == true && request.resource.data.approvedBy == request.auth.uid
         && request.resource.data.role in ['student','teacher']
+        && request.resource.data.name == getAfter(/databases/$(database)/documents/users/$(request.resource.data.uid)).data.name
         && memberProfileAfter(request.auth.uid, request.resource.data.uid, request.resource.data.role)
         && getAfter(/databases/$(database)/documents/schoolJoinRequests/$(request.auth.uid+'_'+request.resource.data.uid)).data.status == 'approved');
       allow update: if admin() || (school() && resource.data.schoolId == request.auth.uid
@@ -136,8 +148,9 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/users/$(resource.data.uid)).data.schoolId == ''
         && getAfter(/databases/$(database)/documents/users/$(resource.data.uid)).data.schoolJoinStatus == '')
         || (school() && resource.data.schoolId == request.auth.uid && resource.data.active == false
-          && request.resource.data.keys().hasOnly(['uid','schoolId','role','active','approvedBy','createdAt'])
+          && request.resource.data.keys().hasOnly(['uid','schoolId','role','active','approvedBy','createdAt','name'])
           && request.resource.data.active == true && request.resource.data.approvedBy == request.auth.uid
+          && request.resource.data.name == get(/databases/$(database)/documents/users/$(resource.data.uid)).data.name
           && memberProfileAfter(request.auth.uid, resource.data.uid, resource.data.role)
           && getAfter(/databases/$(database)/documents/schoolJoinRequests/$(request.auth.uid+'_'+resource.data.uid)).data.status == 'approved');
     }
@@ -228,7 +241,24 @@ service cloud.firestore {
     match /marksheetVerifications/{id} { allow read: if signedIn() && (resource.data.issuerUid == request.auth.uid || admin()); }
     match /conversations/{id} {
       allow read: if signedIn() && request.auth.uid in resource.data.members && connected(resource.data.schoolId);
-      match /messages/{messageId} { allow read: if ownsConversation(id); }
+      allow create: if connected(request.resource.data.schoolId)
+        && request.resource.data.schoolId == me().get('schoolId', request.auth.uid)
+        && request.resource.data.keys().hasOnly(['schoolId','members','createdAt'])
+        && request.resource.data.members is list && request.resource.data.members.size() == 2
+        && request.resource.data.members[0] != request.resource.data.members[1]
+        && request.auth.uid in request.resource.data.members
+        && chatPeer(request.resource.data.schoolId,
+          request.resource.data.members[0] == request.auth.uid ? request.resource.data.members[1] : request.resource.data.members[0])
+        && request.resource.data.createdAt is int;
+      match /messages/{messageId} {
+        allow read: if ownsConversation(id);
+        allow create: if ownsConversation(id)
+          && request.resource.data.keys().hasOnly(['senderId','text','createdAt'])
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text is string && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000
+          && request.resource.data.createdAt == request.time;
+      }
     }
     match /coupons/{id} { allow get: if signedIn(); allow list,write: if admin(); }
     match /proEntitlements/{id} { allow read: if signedIn() && (id == request.auth.uid || admin()); }

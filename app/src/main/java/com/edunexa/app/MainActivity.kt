@@ -176,7 +176,7 @@ class MainActivity : EduActivity() {
             val displayName = d.getString("name") ?: "Student"; val email = d.getString("email") ?: auth.currentUser?.email.orEmpty(); val cls = d.getString("className") ?: "—"; val school = d.getString("schoolName"); val phone = d.getString("phone").orEmpty(); val dob = d.getString("dateOfBirth").orEmpty(); val gender = d.getString("gender").orEmpty()
             val extra = listOfNotNull(phone.takeIf { it.isNotBlank() }?.let { "Phone: $it" }, dob.takeIf { it.isNotBlank() }?.let { "DOB: $it" }, gender.takeIf { it.isNotBlank() }?.let { "Gender: $it" }).joinToString("\n")
             info.text = "$displayName\n$email\nClass: $cls${school?.let { "\n$it" } ?: ""}${if (extra.isNotBlank()) "\n$extra" else ""}"
-            d.getString("profilePhotoUrl")?.let { url -> profileImage?.let { com.edunexa.app.data.ProfilePhotos.load(it,url) } }
+            (d.getString("profilePhotoData")?:d.getString("profilePhotoUrl"))?.let { url -> profileImage?.let { com.edunexa.app.data.ProfilePhotos.load(it,url) } }
             editBtn.isEnabled = true; editBtn.setOnClickListener { editProfile(uid, displayName, if (cls == "—") "" else cls, phone, dob, gender,d.getString("role") ?: "student") }
         }.addOnFailureListener { info.text = "Account details unavailable\nCheck your internet connection." } }
         action(root, "🏆", "MCQ History", "Completed tests and scores") { startActivity(Intent(this, McqHistoryActivity::class.java)) }; action(root, "🛠", "EduNexa Tools", "Open all student utility tools") { startActivity(Intent(this, ToolsActivity::class.java)) }

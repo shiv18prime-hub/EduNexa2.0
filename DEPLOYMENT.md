@@ -12,7 +12,7 @@ Android will reject an in-place update between APKs signed by different keys. If
 
 ## What requires the project owner
 
-This workspace has no authenticated Firebase administration connection. Production functions, Firestore/Storage rules, indexes and web authorized domains have not been deployed from this branch. The configured dashboard endpoint returned HTTP 404 on 2026-10-13. Working Android Google login does not provide administrative deployment credentials.
+The code workspace has no Firebase administration credentials. The owner deployed the Spark Firestore baseline, authorized the web domain and granted the verified administrator from Cloud Shell on 2026-10-16. The new chat/photo rules below still need to be deployed after this change is merged. The configured dashboard endpoint returned HTTP 404 on 2026-10-13.
 
 ### Zero-budget setup (current owner choice)
 
@@ -52,11 +52,12 @@ Setup validates the selected account and web configuration before deploying. Adm
 | Android and web dashboard reads and personal calculator result history | Migrated to private Firestore reads/writes in this branch; deploy updated clients and rules before use |
 | Android and web school approval/code rotation, join requests, review/cancel, active memberships and disconnect | Migrated to admin-only or paired Firestore transactions in this branch; deploy updated clients and rules before use |
 | School result/attendance/notice publishing | Migrated to validation rules and approved-member checks in Firestore; deploy updated rules and clients before use |
-| Timed test scoring, chat sending, Pro grants/redemptions and marksheet registration/verification | Still call Cloud Functions; not activated by Spark setup |
-| Profile photo uploads | Still use Firebase Storage; need a no-billing replacement |
+| School chat text, contacts and history | Firestore rules validate connected school membership, two-party conversations and sender identity; no push notifications or server-side rate limiting |
+| Compressed profile photos (up to 180 KB) | Stored as bounded JPEG data in the owner’s Firestore profile; uses Firestore quota |
+| Timed test scoring, Pro grants/redemptions and marksheet registration/verification | Still call Cloud Functions; not activated by Spark setup |
 | Chat push delivery | Still depends on a deployed notification function |
 
-The complete online app is **not yet available on Spark**. The migrations above are source changes and have not yet been deployed to the owner’s Firebase project or installed as an updated APK/web client. Existing access rules remain restrictive: memberships, answer keys and Pro grants are not made freely client-writable to bypass the missing server. School record writes require approved school/teacher roles and verified student membership. The remaining free-backend work must retain role boundaries and trusted grading. Login success or an admin role grant does not mean every school feature has been activated.
+The complete online app is **not yet available on Spark**. Source changes must be merged and the updated Firestore rules deployed before installing an updated APK or publishing the web build. Existing access rules remain restrictive: memberships, answer keys and Pro grants are not made freely client-writable to bypass the missing server. School record writes require approved school/teacher roles and verified student membership. Timed scoring, Pro and marksheet operations still need a trusted backend. Login success or an admin role grant does not mean every school feature has been activated.
 
 ### Billed backend (optional, not used for the zero-budget setup)
 
@@ -139,8 +140,8 @@ Current GitHub artifact is a debug APK for owner testing. A distributable signed
 3. Join student and teacher using the active school code; approve or cancel/reject their requests.
 4. Publish results, attendance, notices and a test as school/teacher. Student sees their own academic records and current school's notices.
 5. Submit a timed test; test cross-school denial, retry, attempt limit and late submission.
-6. Upload a profile photo and reopen the same account on another device/web.
-7. Exchange a school message; remove the member and verify message access is revoked.
+6. Upload a compressed profile photo (at most 180 KB) and reopen the same account on another device/web.
+7. Exchange a school message; remove the member and verify message access is revoked. Spark chat has no push notifications or server-side message rate limit.
 8. Redeem a 100% coupon; confirm duplicate redemption fails. Use the provider sandbox for paid Pro and refund.
 9. Register a school marksheet; verify lookup shows only minimal academic summary. Student practice records require Pro and stay clearly labelled practice records.
 10. Test image/PDF export, portrait edges and navigation/keyboard insets on a physical Android phone.

@@ -65,7 +65,7 @@ class SchoolWorkflowRepository {
             if(request.getString("status")!="pending"||request.getString("studentId")!=studentId||member.getString("pendingSchoolId")!=schoolId||member.getString("role") !in listOf("student","teacher"))throw IllegalStateException("No current pending request")
             val role=member.getString("role").orEmpty()
             if(approve){
-                tx.set(membershipRef,mapOf("uid" to studentId,"schoolId" to schoolId,"role" to role,"active" to true,"approvedBy" to schoolId,"createdAt" to System.currentTimeMillis()))
+                tx.set(membershipRef,mapOf("uid" to studentId,"schoolId" to schoolId,"role" to role,"active" to true,"approvedBy" to schoolId,"name" to member.getString("name").orEmpty(),"createdAt" to System.currentTimeMillis()))
                 tx.update(userRef,mapOf("schoolId" to schoolId,"schoolName" to (school.getString("schoolName")?.ifBlank{null}?:school.getString("name").orEmpty()),
                     "schoolCode" to request.getString("schoolCode").orEmpty(),"schoolJoinStatus" to "connected","schoolJoinedAt" to System.currentTimeMillis(),"pendingSchoolId" to "","pendingSchoolCode" to ""))
             }else tx.update(userRef,mapOf("schoolJoinStatus" to "rejected","pendingSchoolId" to "","pendingSchoolCode" to ""))
