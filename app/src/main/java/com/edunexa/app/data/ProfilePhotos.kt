@@ -26,4 +26,12 @@ object ProfilePhotos {
    bitmap.recycle();require(out.size()<=180*1024){"Choose a smaller photo"}
    val data="data:image/jpeg;base64,"+Base64.encodeToString(out.toByteArray(),Base64.NO_WRAP)
    FirebaseFirestore.getInstance().collection("users").document(uid).update("profilePhotoData",data).addOnSuccessListener{onSuccess(data)}.addOnFailureListener{onError(it.message?:"Could not save profile photo")}
-  }catch(e:Exception){android.os.Handler(android.os.Looper.getMainLo
+  }catch(e:Exception){android.os.Handler(android.os.Looper.getMainLooper()).post{onError(e.message?:"Could not read photo")}}}
+ }
+ fun load(view:ImageView,value:String){
+  view.tag=value;executor.execute{try{
+   val bytes=if(value.startsWith("data:image/jpeg;base64,"))Base64.decode(value.substringAfter(','),Base64.DEFAULT) else if(value.startsWith("https://firebasestorage.googleapis.com/"))URL(value).openConnection().apply{connectTimeout=10000;readTimeout=10000}.getInputStream().use{it.readBytes()} else return@execute
+   require(bytes.size<=260*1024);val bitmap=BitmapFactory.decodeByteArray(bytes,0,bytes.size);view.post{if(view.tag==value)view.setImageBitmap(bitmap)}
+  }catch(_:Exception){}}
+ }
+}

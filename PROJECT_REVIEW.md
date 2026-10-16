@@ -18,4 +18,6 @@ The latest main workflow (#166) succeeded on 2026-10-16. Android build, unit tes
 
 The owner confirmed Google sign-in worked on the verified 2.0.1 APK on 2026-10-13. Browser and physical-device acceptance of the newest source changes are still needed.
 
-The owner has deployed the Spark baseline f
+The owner has deployed the Spark baseline from Cloud Shell. After this change is merged, deploy the updated Firestore rules/indexes with `bash scripts/deploy-spark.sh`, then update the APK/web client and verify chat and profile photos. This command stays on Firebase Spark and does not deploy Functions or Storage. Timed test scoring, Pro grants/redemption, paid membership and marksheet operations remain dependent on Cloud Functions and are unavailable on the current Spark setup. Keep the selected zero-budget constraint; do not link billing.
+
+The production dashboard returned HTTP 404 in a check on 2026-10-13. The web Site remains a separate hosted project, so merging GitHub source does not by itself publish the updated web client. See DEPLOYMENT.md for owner activation and acceptance steps.

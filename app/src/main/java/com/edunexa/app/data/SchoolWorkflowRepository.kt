@@ -67,4 +67,24 @@ class SchoolWorkflowRepository {
             if(approve){
                 tx.set(membershipRef,mapOf("uid" to studentId,"schoolId" to schoolId,"role" to role,"active" to true,"approvedBy" to schoolId,"name" to member.getString("name").orEmpty(),"createdAt" to System.currentTimeMillis()))
                 tx.update(userRef,mapOf("schoolId" to schoolId,"schoolName" to (school.getString("schoolName")?.ifBlank{null}?:school.getString("name").orEmpty()),
-                    "schoolCode"
+                    "schoolCode" to request.getString("schoolCode").orEmpty(),"schoolJoinStatus" to "connected","schoolJoinedAt" to System.currentTimeMillis(),"pendingSchoolId" to "","pendingSchoolCode" to ""))
+            }else tx.update(userRef,mapOf("schoolJoinStatus" to "rejected","pendingSchoolId" to "","pendingSchoolCode" to ""))
+            tx.update(requestRef,mapOf("status" to if(approve)"approved" else "rejected","reviewedAt" to System.currentTimeMillis()))
+            if(approve)"Member connected" else "Request rejected"
+        }.addOnSuccessListener{done(true,it)}.addOnFailureListener{done(false,it.message?:"Could not review request")}
+    }
+
+    fun disconnect(memberId:String,done:(Boolean,String)->Unit){
+        val schoolId=uid()?:return done(false,"Please sign in as the school")
+        val schoolRef=db.collection("users").document(schoolId);val approvalRef=db.collection("schoolApprovals").document(schoolId)
+        val memberRef=db.collection("users").document(memberId);val proofRef=db.collection("memberships").document("${schoolId}_$memberId")
+        db.runTransaction{tx->
+            val school=tx.get(schoolRef);val approval=tx.get(approvalRef);val member=tx.get(memberRef);val proof=tx.get(proofRef)
+            if(school.getString("role")!="school"||school.getBoolean("schoolApproved")!=true||approval.getBoolean("approved")!=true)throw IllegalStateException("Approved school account required")
+            if(member.getString("schoolId")!=schoolId||member.getString("schoolJoinStatus")!="connected"||proof.getBoolean("active")!=true)throw IllegalStateException("Member is no longer connected")
+            tx.update(memberRef,mapOf("schoolId" to "","schoolName" to "","schoolCode" to "","schoolJoinStatus" to "","pendingSchoolId" to "","pendingSchoolCode" to ""))
+            tx.update(proofRef,"active",false)
+            "Member disconnected"
+        }.addOnSuccessListener{done(true,it)}.addOnFailureListener{done(false,it.message?:"Could not disconnect member")}
+    }
+}
