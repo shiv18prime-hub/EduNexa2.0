@@ -9,27 +9,57 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="22dp"
-        android:paddingEnd="22dp"
-        android:paddingTop="28dp"
-        android:paddingBottom="22dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="18dp"
         android:background="@drawable/bg_premium_header">
-
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="EduNexa 2.0"
-            android:textColor="#FFFFFF"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Learn • Calculate • Create • Connect • Grow"
-            android:textColor="#E8E5FF"
-            android:textSize="13sp" />
+            <ImageView
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:src="@drawable/edunexa_logo"
+                android:scaleType="centerInside"
+                android:contentDescription="EduNexa logo"
+                android:background="#FFFFFF"
+                android:padding="3dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingStart="12dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="EduNexa"
+                    android:textColor="#FFFFFF"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Learn • Calculate • Create • Connect"
+                    android:textColor="#E8E5FF"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:gravity="center"
+                android:text="✦"
+                android:textColor="#FDE68A"
+                android:textSize="20sp"
+                android:background="#554F46C8" />
+        </LinearLayout>
     </LinearLayout>
 
     <FrameLayout
@@ -37,11 +67,13 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="18dp" />
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="16dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="76dp"
+        android:layout_height="72dp"
         android:orientation="horizontal"
         android:gravity="center"
         android:paddingStart="8dp"
@@ -49,9 +81,9 @@
         android:background="#FFFFFF"
         android:elevation="12dp">
 
-        <Button android:id="@+id/homeBtn" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Home" android:textAllCaps="false" android:backgroundTint="#EEF0FF" android:textColor="#4338CA" />
-        <Button android:id="@+id/toolsBtn" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Tools" android:textAllCaps="false" android:backgroundTint="#FFFFFF" android:textColor="#596174" />
-        <Button android:id="@+id/connectBtn" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Connect" android:textAllCaps="false" android:backgroundTint="#FFFFFF" android:textColor="#596174" />
-        <Button android:id="@+id/profileBtn" android:layout_width="0dp" android:layout_height="52dp" android:layout_weight="1" android:text="Profile" android:textAllCaps="false" android:backgroundTint="#FFFFFF" android:textColor="#596174" />
+        <Button android:id="@+id/homeBtn" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" android:text="⌂  Home" android:textAllCaps="false" android:textSize="12sp" android:minWidth="0dp" android:insetLeft="2dp" android:insetRight="2dp" android:backgroundTint="#EEF0FF" android:textColor="#4338CA" />
+        <Button android:id="@+id/toolsBtn" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" android:text="▦  Tools" android:textAllCaps="false" android:textSize="12sp" android:minWidth="0dp" android:insetLeft="2dp" android:insetRight="2dp" android:backgroundTint="#FFFFFF" android:textColor="#596174" />
+        <Button android:id="@+id/connectBtn" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" android:text="⌘  Connect" android:textAllCaps="false" android:textSize="12sp" android:minWidth="0dp" android:insetLeft="2dp" android:insetRight="2dp" android:backgroundTint="#FFFFFF" android:textColor="#596174" />
+        <Button android:id="@+id/profileBtn" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" android:text="◉  Profile" android:textAllCaps="false" android:textSize="12sp" android:minWidth="0dp" android:insetLeft="2dp" android:insetRight="2dp" android:backgroundTint="#FFFFFF" android:textColor="#596174" />
     </LinearLayout>
 </LinearLayout>
