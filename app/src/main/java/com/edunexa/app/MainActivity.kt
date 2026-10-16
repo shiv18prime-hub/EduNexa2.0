@@ -62,6 +62,41 @@ class MainActivity : EduActivity() {
         c.addView(row); c.setOnClickListener { go() }; root.addView(c, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(11)) })
     }
 
+    private data class HomeAction(val icon: String, val title: String, val subtitle: String, val open: () -> Unit)
+
+    private fun homeTile(item: HomeAction): MaterialCardView {
+        val tile = card(20).apply { setContentPadding(dp(14), dp(14), dp(14), dp(14)); cardElevation = dp(1).toFloat() }
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        box.addView(TextView(this).apply {
+            text = item.icon; textSize = 23f; gravity = Gravity.CENTER
+            setBackgroundColor(Color.parseColor("#F0F1FF")); setTextColor(Color.parseColor("#4338CA"))
+        }, LinearLayout.LayoutParams(dp(42), dp(42)))
+        box.addView(TextView(this).apply {
+            text = item.title; textSize = 15f; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END
+            setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#17213D")); setPadding(0, dp(11), 0, 0)
+        })
+        box.addView(TextView(this).apply {
+            text = item.subtitle; textSize = 11f; maxLines = 2; setLineSpacing(0f, 1.05f)
+            setTextColor(Color.parseColor("#747B91")); setPadding(0, dp(4), 0, 0)
+        })
+        tile.addView(box)
+        tile.setOnClickListener { item.open() }
+        return tile
+    }
+
+    private fun homeGrid(root: LinearLayout, items: List<HomeAction>) {
+        items.chunked(2).forEach { rowItems ->
+            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            rowItems.forEachIndexed { index, item ->
+                row.addView(homeTile(item), LinearLayout.LayoutParams(0, dp(126), 1f).apply {
+                    if (index == 0) setMargins(0, 0, dp(6), dp(10)) else setMargins(dp(6), 0, 0, dp(10))
+                })
+            }
+            if (rowItems.size == 1) row.addView(android.view.View(this), LinearLayout.LayoutParams(0, dp(126), 1f).apply { setMargins(dp(6), 0, 0, dp(10)) })
+            root.addView(row, LinearLayout.LayoutParams(-1, -2))
+        }
+    }
+
     private fun statCard(title: String, initial: String): Pair<MaterialCardView, TextView> {
         val c = card(18); val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
         val value = TextView(this).apply { text = initial; textSize = 21f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#4338CA")); gravity = Gravity.CENTER }
@@ -71,20 +106,28 @@ class MainActivity : EduActivity() {
 
     private fun showHome() {
         selectTab("home"); content.removeAllViews(); val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(3), dp(2), dp(3), dp(28)) }
-        val hero = card(24).apply { setCardBackgroundColor(Color.parseColor("#F7F7FF")); strokeColor = Color.parseColor("#DDDDFB") }; val heroBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        val hello = TextView(this).apply { text = "Good to see you 👋"; textSize = 14f; setTextColor(Color.parseColor("#6B7280")) }
-        val name = TextView(this).apply { text = "Student"; textSize = 27f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#171A2B")); setPadding(0, dp(2), 0, 0) }
-        val identity = TextView(this).apply { text = "Your personalized learning dashboard"; textSize = 13f; setTextColor(Color.parseColor("#666D82")); setPadding(0, dp(5), 0, dp(12)) }
-        val status = TextView(this).apply { text = "●  Loading account status"; textSize = 13f; setTextColor(Color.parseColor("#4338CA")); setPadding(dp(12), dp(8), dp(12), dp(8)); setBackgroundColor(Color.parseColor("#ECECFF")) }
+        val hero = card(24).apply { setCardBackgroundColor(Color.parseColor("#F7F7FF")); strokeColor = Color.parseColor("#DDDDFB"); setContentPadding(dp(20), dp(18), dp(20), dp(18)) }; val heroBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val hello = TextView(this).apply { text = "YOUR LEARNING SPACE"; textSize = 10f; letterSpacing = .12f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#6258C7")) }
+        val name = TextView(this).apply { text = "Welcome, Student"; textSize = 25f; setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#171A2B")); setPadding(0, dp(4), 0, 0) }
+        val identity = TextView(this).apply { text = "A smarter way to learn and grow"; textSize = 13f; setTextColor(Color.parseColor("#666D82")); setPadding(0, dp(4), 0, dp(12)) }
+        val status = TextView(this).apply { text = "●  Checking your school connection"; textSize = 12f; setTextColor(Color.parseColor("#4338CA")); setPadding(dp(11), dp(7), dp(11), dp(7)); setBackgroundColor(Color.parseColor("#ECECFF")) }
         heroBox.addView(hello); heroBox.addView(name); heroBox.addView(identity); heroBox.addView(status); hero.addView(heroBox); root.addView(hero, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(15)) })
         val stats = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }; val (resultCard, resultValue) = statCard("Latest Result", "—"); val (attendanceCard, attendanceValue) = statCard("Attendance", "—")
         stats.addView(resultCard, LinearLayout.LayoutParams(0, dp(92), 1f).apply { setMargins(0, 0, dp(6), 0) }); stats.addView(attendanceCard, LinearLayout.LayoutParams(0, dp(92), 1f).apply { setMargins(dp(6), 0, 0, 0) })
         resultCard.setOnClickListener { startActivity(Intent(this, StudentResultsActivity::class.java)) }; attendanceCard.setOnClickListener { startActivity(Intent(this, StudentAttendanceActivity::class.java)) }; root.addView(stats, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(16)) })
-        root.addView(sectionTitle("Quick Actions")); action(root, "🧮", "Result Calculator", "Calculate percentage, grade and result") { startActivity(Intent(this, ResultCalculatorActivity::class.java)) }; action(root, "📝", "MCQ Tests", "Take tests assigned by your school") { startActivity(Intent(this, StudentMcqActivity::class.java)) }; action(root, "📊", "School Results", "View results published by your school") { startActivity(Intent(this, StudentResultsActivity::class.java)) }; action(root, "📅", "My Attendance", "Check your attendance record") { startActivity(Intent(this, StudentAttendanceActivity::class.java)) }
-        root.addView(sectionTitle("School & Updates")); action(root, "📢", "Notices", "School announcements and important updates") { startActivity(Intent(this, NoticeActivity::class.java)) }; action(root, "🏫", "Connect School", "Connect securely with your school") { startActivity(Intent(this, JoinSchoolActivity::class.java)) }
-        action(root, "💬", "School Messages", "Talk with teachers and school members") { startActivity(Intent(this, ChatActivity::class.java)) }
-        action(root,"⭐","EduNexa Pro","Membership and coupons") { startActivity(Intent(this, MembershipActivity::class.java)) }
-        root.addView(sectionTitle("Smart Tools")); action(root, "🛠", "EduNexa Tools", "Image, PDF, marksheet and utility tools") { startActivity(Intent(this, ToolsActivity::class.java)) }
+        root.addView(sectionTitle("Your learning")); homeGrid(root, listOf(
+            HomeAction("🧮", "Result calculator", "Marks, grade & result") { startActivity(Intent(this, ResultCalculatorActivity::class.java)) },
+            HomeAction("📝", "MCQ tests", "Practice and check scores") { startActivity(Intent(this, StudentMcqActivity::class.java)) },
+            HomeAction("📊", "School results", "Published academic results") { startActivity(Intent(this, StudentResultsActivity::class.java)) },
+            HomeAction("📅", "Attendance", "Review your attendance") { startActivity(Intent(this, StudentAttendanceActivity::class.java)) }
+        ))
+        root.addView(sectionTitle("School & tools")); homeGrid(root, listOf(
+            HomeAction("📢", "Notices", "School news and updates") { startActivity(Intent(this, NoticeActivity::class.java)) },
+            HomeAction("🏫", "Connect school", "Join your school securely") { startActivity(Intent(this, JoinSchoolActivity::class.java)) },
+            HomeAction("💬", "Messages", "Connect with your school") { startActivity(Intent(this, ChatActivity::class.java)) },
+            HomeAction("🛠", "Smart tools", "Image, PDF and more") { startActivity(Intent(this, ToolsActivity::class.java)) },
+            HomeAction("⭐", "EduNexa Pro", "Membership and offers") { startActivity(Intent(this, MembershipActivity::class.java)) }
+        ))
         auth.currentUser?.uid?.let { uid -> db.collection("users").document(uid).get().addOnSuccessListener { d ->
             name.text = d.getString("name") ?: auth.currentUser?.displayName ?: "Student"; val className = d.getString("className"); val schoolName = d.getString("schoolName")
             identity.text = listOfNotNull(className?.takeIf { it.isNotBlank() }?.let { "Class $it" }, schoolName?.takeIf { it.isNotBlank() }).joinToString(" • ").ifBlank { "Your personalized learning dashboard" }

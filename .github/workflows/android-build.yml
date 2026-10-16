@@ -44,7 +44,15 @@ jobs:
         run: gradle testDebugUnitTest assembleDebug --stacktrace
       - name: Verify APK Google OAuth registration
         if: github.event_name != 'pull_request'
+        id: oauth_registration
+        # Debug keystores are cached per branch. Never publish an APK with an
+        # unregistered key; keep compile/tests/lint useful and report why the
+        # artifact was withheld instead of failing the whole workflow.
+        continue-on-error: true
         run: python3 scripts/verify-google-signing.py app/build/outputs/apk/debug/app-debug.apk app/google-services.json
+      - name: Explain why the APK was not published
+        if: steps.oauth_registration.outcome == 'failure'
+        run: echo "::warning::Android build passed, but APK upload was skipped because this branch's debug signing certificate is not registered with Firebase. Use the verified APK from a successful fix/** push or register the certificate with the Firebase project owner."
       - name: Check Android lint
         run: gradle lintDebug --stacktrace
       - name: Print lint errors
@@ -62,7 +70,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         # PR-scoped caches can contain a different, unregistered debug key.
         # Only publish APKs whose actual signature passed the Firebase check.
-        if: success() && github.event_name != 'pull_request'
+        if: success() && github.event_name != 'pull_request' && steps.oauth_registration.outcome == 'success'
         with:
           name: EduNexa-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
