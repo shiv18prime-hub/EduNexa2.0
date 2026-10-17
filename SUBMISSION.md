@@ -2,6 +2,10 @@
 
 The Android submission edition includes an offline study desk, three original practice quizzes with explanations and device-local history, result calculation/sharing, personal PDF study reports, image/PDF utilities, Google/email authentication, profile sync, school approval and connection requests, school chat, and school result/attendance/notice workflows.
 
+## School rules update
+
+Before using online school publishing, the Firebase project owner must deploy the updated Firestore rules once: `bash scripts/deploy-spark.sh --installed` from an authenticated, updated checkout. The update corrects fractional percentage validation (for example, 2/7 = 28.57%) and does not expand role permissions. Offline study tools do not require deployment.
+
 ## Demonstration
 
 1. Open **Explore offline study tools** on the welcome screen.

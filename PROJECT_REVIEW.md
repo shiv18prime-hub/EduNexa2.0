@@ -1,5 +1,9 @@
 # EduNexa 2.0 status
 
+## Android 2.0.3 submission edition
+
+Android school result, attendance and notice publishers now use the existing restrictive Firestore contracts instead of undeployed callables. Approved schools can access these actions; teacher access checks active membership. Original offline practice quizzes, per-account device-local history and explicitly unverified personal PDF study reports are available without sign-in. The teacher workspace and login recovery have been refreshed. Hosted examination scoring, paid membership, registered verification and notification delivery default to disabled in this build. Deploy the updated rules once for fractional school percentages; see SUBMISSION.md.
+
 ## Implemented in source
 
 - Google/email authentication and profile creation/editing for student, teacher and school accounts.
