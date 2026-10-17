@@ -60,7 +60,8 @@ class SchoolWorkflowRepository {
         val requestRef=db.collection("schoolJoinRequests").document("${schoolId}_$studentId")
         val membershipRef=db.collection("memberships").document("${schoolId}_$studentId")
         db.runTransaction{tx->
-            val school=tx.get(schoolRef);val approval=tx.get(approvalRef);val request=tx.get(requestRef);val member=tx.get(userRef);tx.get(membershipRef)
+            val school=tx.get(schoolRef);val approval=tx.get(approvalRef);val request=tx.get(requestRef);val member=tx.get(userRef)
+            // A first-time member has no membership document to read. Rules allow its creation in this transaction.
             if(school.getString("role")!="school"||school.getBoolean("schoolApproved")!=true||approval.getBoolean("approved")!=true)throw IllegalStateException("Only an approved school can review requests")
             if(request.getString("status")!="pending"||request.getString("studentId")!=studentId||member.getString("pendingSchoolId")!=schoolId||member.getString("role") !in listOf("student","teacher"))throw IllegalStateException("No current pending request")
             val role=member.getString("role").orEmpty()

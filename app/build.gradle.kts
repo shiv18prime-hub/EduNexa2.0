@@ -2,7 +2,7 @@ plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id(
 android {
  namespace="com.edunexa.app"; compileSdk=35
  defaultConfig {
-  applicationId="com.edunexa.app"; minSdk=23; targetSdk=35; versionCode=23; versionName="2.0.3"
+  applicationId="com.edunexa.app"; minSdk=23; targetSdk=35; versionCode=24; versionName="2.0.4"
   buildConfigField("boolean", "HOSTED_SERVICES_ENABLED", (providers.gradleProperty("hostedServicesEnabled").orNull == "true").toString())
  }
  buildFeatures { viewBinding=true; buildConfig=true }
