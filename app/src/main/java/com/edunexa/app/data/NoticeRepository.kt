@@ -8,7 +8,15 @@ class NoticeRepository {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
-    fun publish(title:String,message:String,targetClass:String,important:Boolean,onResult:(Boolean,String)->Unit){Backend.call("publishNotice",mapOf("title" to title,"message" to message,"targetClass" to targetClass,"important" to important),{onResult(true,it["message"].toString())},{onResult(false,it)})}
+    fun publish(title:String,message:String,targetClass:String,important:Boolean,onResult:(Boolean,String)->Unit){
+        val uid=auth.currentUser?.uid?:return onResult(false,"Please sign in first")
+        SchoolScope.resolve({sid->
+            val record=try{com.edunexa.app.core.SchoolRecords.notice(sid,uid,title,message,targetClass,important,System.currentTimeMillis())}
+                catch(e:IllegalArgumentException){onResult(false,e.message?:"Check the notice details");return@resolve}
+            db.collection("notices").add(record).addOnSuccessListener{onResult(true,"Notice published")}
+                .addOnFailureListener{onResult(false,it.localizedMessage?:"Could not publish notice")}
+        },{onResult(false,it)})
+    }
 
     fun studentNotices(onResult: (List<Map<String, Any>>) -> Unit, onError: (String) -> Unit) {
         val uid = auth.currentUser?.uid ?: return onError("Please login first")

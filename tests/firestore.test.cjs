@@ -42,3 +42,19 @@ test('personal calculator results save privately while school-issued records rem
 });
 test('Spark school members can list minimal contacts and chat cannot be forged',async()=>{await assertSucceeds(getDocs(query(collection(db('s'),'memberships'),where('schoolId','==','school'),where('active','==',true))));await assertFails(getDocs(query(collection(db('other'),'memberships'),where('schoolId','==','school'),where('active','==',true))));await assertSucceeds(getDoc(doc(db('s'),'conversations','chat','messages','m')));await assertFails(getDoc(doc(db('other'),'conversations','chat','messages','m')));const convo=doc(db('s'),'conversations','new-chat');await assertSucceeds(setDoc(convo,{schoolId:'school',members:['s','teacher'],createdAt:Date.now()}));await assertFails(setDoc(doc(db('s'),'conversations','outsider-chat'),{schoolId:'school',members:['s','other'],createdAt:Date.now()}));await assertSucceeds(setDoc(doc(db('s'),'conversations','chat','messages','valid'),{senderId:'s',text:'Hello school',createdAt:require('firebase/firestore').serverTimestamp()}));await assertFails(setDoc(doc(db('s'),'conversations','chat','messages','fake'),{senderId:'teacher',text:'Forged',createdAt:require('firebase/firestore').serverTimestamp()}));await assertFails(setDoc(doc(db('s'),'conversations','chat','messages','long'),{senderId:'s',text:'x'.repeat(2001),createdAt:require('firebase/firestore').serverTimestamp()}));});
 test('anonymous data and client coupon redemption are denied',async()=>{await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(),'users','s')));await assertFails(setDoc(doc(db('s'),'couponRedemptions','s_CODE'),{uid:'s'}));await assertFails(setDoc(doc(db('s'),'proOrders','fake'),{uid:'s',status:'paid'}));});
+
+
+test('Android staff transactions use canonical student identity and reject disconnected students',async()=>{
+  const staff=db('teacher'),studentRef=doc(staff,'users','s');
+  await assertSucceeds(runTransaction(staff,async tx=>{
+    const student=await tx.get(studentRef);
+    tx.set(doc(staff,'schoolResults','android-result'),{schoolId:'school',issuerUid:'teacher',studentId:'s',studentName:student.get('name'),exam:'Term 1',subject:'Math',obtained:2,total:7,passMarks:3,percentage:2*100/7,grade:'F',result:'FAIL',published:true,createdAt:1});
+    tx.set(doc(staff,'attendance','school_s_2026-10-17'),{schoolId:'school',issuerUid:'teacher',studentId:'s',studentName:student.get('name'),date:'2026-10-17',present:true,updatedAt:1});
+  }));
+  await assertFails(setDoc(doc(staff,'schoolResults','wrong-name'),{schoolId:'school',issuerUid:'teacher',studentId:'s',studentName:'Forged student',exam:'Term 1',subject:'Math',obtained:80,total:100,passMarks:33,percentage:80,grade:'A',result:'PASS',published:true,createdAt:1}));
+  await env.withSecurityRulesDisabled(async c=>updateDoc(doc(c.firestore(),'memberships','school_s'),{active:false}));
+  await assertFails(runTransaction(staff,async tx=>{
+    const student=await tx.get(studentRef);
+    tx.set(doc(staff,'attendance','school_s_2026-10-18'),{schoolId:'school',issuerUid:'teacher',studentId:'s',studentName:student.get('name'),date:'2026-10-18',present:true,updatedAt:2});
+  }));
+});

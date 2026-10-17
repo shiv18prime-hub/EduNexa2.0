@@ -49,8 +49,8 @@ class MarksheetMakerActivity : EduActivity() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL; setPadding(dp(18), dp(20), dp(18), dp(30)); setBackgroundColor(Color.parseColor("#F6F7FC"))
         }
-        root.addView(TextView(this).apply { text = "Professional Marksheet Maker"; textSize = 26f; setTypeface(typeface, android.graphics.Typeface.BOLD) })
-        root.addView(TextView(this).apply { text = "Custom passing marks • grades • QR lookup • live preview"; setPadding(0, dp(5), 0, dp(14)) })
+        root.addView(TextView(this).apply { text = if(BuildConfig.HOSTED_SERVICES_ENABLED) "Professional Marksheet Maker" else "PDF Study Report"; textSize = 26f; setTypeface(typeface, android.graphics.Typeface.BOLD) })
+        root.addView(TextView(this).apply { text = if(BuildConfig.HOSTED_SERVICES_ENABLED) "Custom passing marks • grades • QR lookup • live preview" else "Custom subjects • grades • offline PDF export"; setPadding(0, dp(5), 0, dp(14)) })
         val form = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(14), dp(10), dp(14), dp(14)); background = rounded("#FFFFFF", 18) }
         fun field(h: String) = EditText(this).apply {
             hint = h; background = rounded("#F7F8FC", 10); setPadding(dp(12), dp(10), dp(12), dp(10)); form.addView(this, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(7) })
@@ -60,12 +60,12 @@ class MarksheetMakerActivity : EduActivity() {
         root.addView(form)
         root.addView(TextView(this).apply { text = "SUBJECTS & MARKS"; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(18), 0, dp(7)) })
         subjectBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }; root.addView(subjectBox)
-        root.addView(Button(this).apply { text = "＋ Add Subject"; isAllCaps = false; setOnClickListener { addSubject() } })
+        root.addView(Button(this).apply { text = "＋ Add Subject"; isAllCaps = false; setOnClickListener { if(subjectBox.childCount<30)addSubject() else Toast.makeText(this@MarksheetMakerActivity,"Use up to 30 subjects",Toast.LENGTH_SHORT).show() } })
         summary = TextView(this).apply { setPadding(dp(12), dp(12), dp(12), dp(12)); background = rounded("#FFFFFF", 12) }; root.addView(summary)
         preview = ImageView(this).apply { adjustViewBounds = true; scaleType = ImageView.ScaleType.FIT_CENTER }; root.addView(preview, LinearLayout.LayoutParams(-1, dp(430)))
-        root.addView(Button(this).apply { text = "Register Verification & Finalize"; isAllCaps = false; setOnClickListener { generate() } })
-        save = Button(this).apply { text = "Save Marksheet PDF"; isAllCaps = false; visibility = View.GONE; setOnClickListener { startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply { type = "application/pdf"; putExtra(Intent.EXTRA_TITLE, "EduNexa_Marksheet_${verificationId}.pdf") }, 402) } }; root.addView(save)
-        status = TextView(this).apply { text = "Live preview only • Nothing saved until finalization."; setPadding(0, dp(10), 0, 0) }; root.addView(status)
+        root.addView(Button(this).apply { text = if(BuildConfig.HOSTED_SERVICES_ENABLED) "Register Verification & Finalize" else "Create Study Report"; isAllCaps = false; setOnClickListener { generate() } })
+        save = Button(this).apply { text = if(BuildConfig.HOSTED_SERVICES_ENABLED) "Save Marksheet PDF" else "Save PDF Study Report"; isAllCaps = false; visibility = View.GONE; setOnClickListener { startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply { type = "application/pdf"; putExtra(Intent.EXTRA_TITLE, if(BuildConfig.HOSTED_SERVICES_ENABLED) "EduNexa_Marksheet_${verificationId}.pdf" else "EduNexa_Study_Report.pdf") }, 402) } }; root.addView(save)
+        status = TextView(this).apply { text = if(BuildConfig.HOSTED_SERVICES_ENABLED) "Live preview only • Nothing saved until finalization." else "Personal practice report • Not school-issued or verified. Preview first, then choose where to save."; setPadding(0, dp(10), 0, 0) }; root.addView(status)
         setContentView(ScrollView(this).apply { addView(root) })
         val w = watcher(); listOf(school, address, student, roll, clazz, exam, session).forEach { it.addTextChangedListener(w) }
         repeat(5) { addSubject() }; updatePreview()
@@ -112,11 +112,11 @@ class MarksheetMakerActivity : EduActivity() {
     private fun drawSheet(r: List<Subject>, max: Int, got: Int, pct: Double, rs: String, final: Boolean, id: String?): Bitmap {
         val width = 900; val height = maxOf(1180, 680 + r.size * 43); val b = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888); val c = Canvas(b); c.drawColor(Color.WHITE); val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(28, 48, 94) }
         c.drawRect(0f, 0f, width.toFloat(), 14f, p); p.textAlign = Paint.Align.CENTER; p.typeface = Typeface.DEFAULT_BOLD; p.textSize = 38f; c.drawText(school.text.toString().ifBlank { "SCHOOL NAME" }, width / 2f, 70f, p); p.typeface = Typeface.DEFAULT; p.textSize = 16f; c.drawText(address.text.toString().ifBlank { "School address / contact" }.take(80), width / 2f, 100f, p); logo?.let { c.drawBitmap(Bitmap.createScaledBitmap(it, 75, 75, true), 30f, 28f, null) }
-        p.typeface = Typeface.DEFAULT_BOLD; p.textSize = 25f; c.drawText("ACADEMIC MARKSHEET", width / 2f, 148f, p); p.textAlign = Paint.Align.LEFT; p.typeface = Typeface.DEFAULT; p.textSize = 17f; c.drawText("Student: ${student.text.toString().ifBlank { "—" }}", 42f, 198f, p); c.drawText("Roll: ${roll.text.toString().ifBlank { "—" }}", 490f, 198f, p); c.drawText("Class: ${clazz.text.toString().ifBlank { "—" }}", 42f, 230f, p); c.drawText("Exam: ${exam.text.toString().ifBlank { "—" }}", 490f, 230f, p); c.drawText("Session: ${session.text.toString().ifBlank { "—" }}", 42f, 262f, p)
+        p.typeface = Typeface.DEFAULT_BOLD; p.textSize = 25f; c.drawText(if(BuildConfig.HOSTED_SERVICES_ENABLED) "ACADEMIC MARKSHEET" else "PERSONAL STUDY REPORT", width / 2f, 148f, p); p.textAlign = Paint.Align.LEFT; p.typeface = Typeface.DEFAULT; p.textSize = 17f; c.drawText("Student: ${student.text.toString().ifBlank { "—" }}", 42f, 198f, p); c.drawText("Roll: ${roll.text.toString().ifBlank { "—" }}", 490f, 198f, p); c.drawText("Class: ${clazz.text.toString().ifBlank { "—" }}", 42f, 230f, p); c.drawText("Exam: ${exam.text.toString().ifBlank { "—" }}", 490f, 230f, p); c.drawText("Session: ${session.text.toString().ifBlank { "—" }}", 42f, 262f, p)
         var y = 320f; p.typeface = Typeface.DEFAULT_BOLD; c.drawText("SUBJECT", 42f, y, p); c.drawText("MAX", 450f, y, p); c.drawText("PASS", 550f, y, p); c.drawText("MARKS", 650f, y, p); c.drawText("GRADE", 775f, y, p); p.typeface = Typeface.DEFAULT
         r.forEach { s -> y += 43; c.drawText((s.name + if (s.optional) " (Optional)" else "").take(32), 42f, y, p); c.drawText(s.max.toString(), 450f, y, p); c.drawText(s.pass.toString(), 550f, y, p); c.drawText(s.got.toString(), 650f, y, p); c.drawText(grade(s.got, s.max), 775f, y, p) }
         y += 65; p.typeface = Typeface.DEFAULT_BOLD; p.textSize = 19f; c.drawText("Total: $got / $max", 42f, y, p); val percentageText = if (max > 0) String.format("%.2f%%", pct) else "—"; c.drawText("Percentage: $percentageText", 300f, y, p); c.drawText("Result: $rs", 650f, y, p)
-        p.typeface = Typeface.DEFAULT; p.textSize = 14f; if (final && id != null) { val qr = qr("EDUNEXA:RESULT:$id", 180); c.drawBitmap(qr, width - 220f, height - 220f, null); c.drawText("Scan to verify", width - 215f, height - 25f, p); c.drawText("Verification ID: $id", 42f, height - 60f, p) } else c.drawText("Live preview • Not registered yet", 42f, height - 60f, p)
+        p.typeface = Typeface.DEFAULT; p.textSize = 14f; if (final && id != null) { val qr = qr("EDUNEXA:RESULT:$id", 180); c.drawBitmap(qr, width - 220f, height - 220f, null); c.drawText("Scan to verify", width - 215f, height - 25f, p); c.drawText("Verification ID: $id", 42f, height - 60f, p) } else { c.drawText(if(BuildConfig.HOSTED_SERVICES_ENABLED) "Live preview • Not registered yet" else "PERSONAL PRACTICE • NOT SCHOOL-ISSUED OR VERIFIED", 42f, height - 60f, p); if(!BuildConfig.HOSTED_SERVICES_ENABLED)c.drawText("Created with EduNexa • Self-entered marks for learning and planning",42f,height-35f,p) }
         return b
     }
 
@@ -125,6 +125,14 @@ class MarksheetMakerActivity : EduActivity() {
     private fun generate() {
         val r=rows();if(school.text.isBlank()||student.text.isBlank()||clazz.text.isBlank()||exam.text.isBlank()||r.none{!it.optional}){status.text="Enter school, student, class, exam and subjects";return}
         if(r.size!=subjectBox.childCount){status.text="Complete or remove every subject row";return}
+        try { com.edunexa.app.core.MarksCalculator.calculate(r.map { com.edunexa.app.core.SubjectMarks(it.name,it.max,it.got,it.pass,it.optional) }) }
+        catch(e:IllegalArgumentException){status.text=e.message;return}
+        if(!BuildConfig.HOSTED_SERVICES_ENABLED){
+            val (m,g,pct)=calc(r);verificationId=null;sheet=drawSheet(r,m,g,pct,result(r),true,null)
+            preview.setImageBitmap(sheet);save.visibility=View.VISIBLE;unsaved=true
+            status.text="Report ready • Save the PDF below. Personal practice; not school-issued or verified."
+            return
+        }
         status.text="Registering record…"
         com.edunexa.app.data.Backend.call("createMarksheet",mapOf("schoolName" to school.text.toString(),"studentName" to student.text.toString(),"className" to clazz.text.toString(),"examName" to exam.text.toString(),"session" to session.text.toString(),"rollNo" to roll.text.toString(),"subjects" to r.map{mapOf("name" to it.name,"max" to it.max,"obtained" to it.got,"passMarks" to it.pass,"optional" to it.optional)}),{record->
             val id=record["id"].toString();school.setText(record["schoolName"].toString());val (m,g,pct)=calc(r);verificationId=id;sheet=drawSheet(r,m,g,pct,result(r),true,id);preview.setImageBitmap(sheet);save.visibility=View.VISIBLE;unsaved=true
@@ -135,11 +143,11 @@ class MarksheetMakerActivity : EduActivity() {
     override fun onActivityResult(rc: Int, res: Int, data: Intent?) {
         super.onActivityResult(rc, res, data); if (res != Activity.RESULT_OK) return
         if (rc == 401) { logo = data?.data?.let { uri -> runCatching { com.edunexa.app.tools.SafeImages.decode(this,uri,512) }.getOrNull() }; invalidateFinal(); updatePreview() }
-        else if (rc == 402) { val uri = data?.data ?: return; val b = sheet ?: return; val pdf = PdfDocument(); val page = pdf.startPage(PdfDocument.PageInfo.Builder(b.width, b.height, 1).create()); page.canvas.drawBitmap(b, 0f, 0f, null); pdf.finishPage(page); runCatching { contentResolver.openOutputStream(uri)?.use { pdf.writeTo(it) }; unsaved = false; status.text = "PDF saved • ID: $verificationId" }.onFailure { status.text = "Save failed: ${it.message}" }; pdf.close() }
+        else if (rc == 402) { val uri = data?.data ?: return; val b = sheet ?: return; val pdf = PdfDocument(); val page = pdf.startPage(PdfDocument.PageInfo.Builder(b.width, b.height, 1).create()); page.canvas.drawBitmap(b, 0f, 0f, null); pdf.finishPage(page); runCatching { (contentResolver.openOutputStream(uri) ?: error("Could not open the selected file")).use { pdf.writeTo(it) }; unsaved = false; status.text = if(verificationId!=null) "PDF saved • ID: $verificationId" else "Study report PDF saved" }.onFailure { status.text = "Save failed: ${it.message}" }; pdf.close() }
     }
 
     private fun grade(g: Int, m: Int) = when (g * 100 / m) { in 90..100 -> "A+"; in 80..89 -> "A"; in 70..79 -> "B+"; in 60..69 -> "B"; in 50..59 -> "C"; in 33..49 -> "D"; else -> "F" }
 
     @Suppress("DEPRECATION")
-    override fun onBackPressed() { if (unsaved) AlertDialog.Builder(this).setTitle("Discard unsaved PDF?").setMessage("Verification is registered, but PDF is not saved on this device.").setPositiveButton("Discard") { _, _ -> unsaved = false; super.onBackPressed() }.setNegativeButton("Stay", null).show() else super.onBackPressed() }
+    override fun onBackPressed() { if (unsaved) AlertDialog.Builder(this).setTitle("Discard unsaved PDF?").setMessage(if(BuildConfig.HOSTED_SERVICES_ENABLED) "Verification is registered, but PDF is not saved on this device." else "Your study report has not been saved on this device.").setPositiveButton("Discard") { _, _ -> unsaved = false; super.onBackPressed() }.setNegativeButton("Stay", null).show() else super.onBackPressed() }
 }
