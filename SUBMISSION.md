@@ -1,6 +1,8 @@
-# EduNexa Android 2.0.3
+# EduNexa Android 2.0.4
 
 The Android submission edition includes an offline study desk, three original practice quizzes with explanations and device-local history, result calculation/sharing, personal PDF study reports, image/PDF utilities, Google/email authentication, profile sync, school approval and connection requests, school chat, and school result/attendance/notice workflows.
+
+2.0.4 fixes first-time school member approval/rejection by removing an unauthorized read of a not-yet-created membership. This fix does not require a rules change. Approval failures now stay visible in a dialog.
 
 ## School rules update
 

@@ -58,3 +58,35 @@ test('Android staff transactions use canonical student identity and reject disco
     tx.set(doc(staff,'attendance','school_s_2026-10-18'),{schoolId:'school',issuerUid:'teacher',studentId:'s',studentName:student.get('name'),date:'2026-10-18',present:true,updatedAt:2});
   }));
 });
+
+
+test('first-time school approval and rejection work without reading a missing membership',async()=>{
+  const school=db('school');
+  for(const [uid,role,approve] of [['new-student','student',true],['new-teacher','teacher',false]]) {
+    const requestId='school_'+uid;
+    await env.withSecurityRulesDisabled(async c=>{
+      const seed=c.firestore();
+      await setDoc(doc(seed,'users',uid),{uid,role,name:'New Member',email:'member@example.test',className:'BCA',schoolName:'',schoolApproved:true,schoolJoinStatus:'pending',pendingSchoolId:'school',pendingSchoolCode:'CODE'});
+      await setDoc(doc(seed,'schoolJoinRequests',requestId),{schoolId:'school',schoolName:'School',studentId:uid,studentName:'New Member',studentEmail:'member@example.test',className:'BCA',memberRole:role,schoolCode:'CODE',status:'pending',createdAt:1});
+    });
+    const memberRef=doc(school,'users',uid),requestRef=doc(school,'schoolJoinRequests',requestId),membershipRef=doc(school,'memberships',requestId);
+    // This unused read caused the Android transaction to fail before any writes.
+    // Keep missing membership documents private rather than broadening the rules.
+    await assertFails(runTransaction(school,async tx=>{
+      await tx.get(doc(school,'users','school'));await tx.get(doc(school,'schoolApprovals','school'));
+      await tx.get(requestRef);await tx.get(memberRef);await tx.get(membershipRef);
+    }));
+    await assertSucceeds(runTransaction(school,async tx=>{
+      const schoolProfile=await tx.get(doc(school,'users','school')),approval=await tx.get(doc(school,'schoolApprovals','school'));
+      const request=await tx.get(requestRef),member=await tx.get(memberRef);
+      if(!schoolProfile.exists()||!approval.get('approved')||request.get('status')!=='pending'||member.get('pendingSchoolId')!=='school')throw Error('invalid pending fixture');
+      if(approve){
+        tx.set(membershipRef,{uid,schoolId:'school',role,active:true,approvedBy:'school',name:member.get('name'),createdAt:2});
+        tx.update(memberRef,{schoolId:'school',schoolName:'School',schoolCode:'CODE',schoolJoinStatus:'connected',schoolJoinedAt:2,pendingSchoolId:'',pendingSchoolCode:''});
+      }else tx.update(memberRef,{schoolJoinStatus:'rejected',pendingSchoolId:'',pendingSchoolCode:''});
+      tx.update(requestRef,{status:approve?'approved':'rejected',reviewedAt:2});
+    }));
+    const memberState=await getDoc(doc(db(uid),'users',uid));
+    if(memberState.get('schoolJoinStatus')!==(approve?'connected':'rejected'))throw Error('review was not applied');
+  }
+});

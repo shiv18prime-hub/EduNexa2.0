@@ -69,7 +69,17 @@ class StudentManagementActivity : EduActivity() {
 
     private fun approve(requestId:String,studentId:String,code:String,schoolId:String){review(studentId,true)}
     private fun reject(requestId:String,studentId:String){review(studentId,false)}
-    private fun review(uid:String,approve:Boolean){workflows.review(uid,approve){_,message->reload(message)}}
+    private fun review(uid:String,approve:Boolean){
+        status.text=if(approve)"Approving member…" else "Rejecting request…"
+        workflows.review(uid,approve){ok,message->
+            if(ok)reload(message) else {
+                load()
+                androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle(if(approve)"Member could not be approved" else "Request could not be rejected")
+                    .setMessage(message).setPositiveButton("OK",null).show()
+            }
+        }
+    }
 
     private fun reload(message: String) { Toast.makeText(this, message, Toast.LENGTH_SHORT).show(); load() }
 }
