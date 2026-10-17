@@ -1,5 +1,14 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("com.google.gms.google-services") }
-android { namespace="com.edunexa.app";compileSdk=35;defaultConfig{applicationId="com.edunexa.app";minSdk=23;targetSdk=35;versionCode=22;versionName="2.0.2"};buildFeatures{viewBinding=true};compileOptions{sourceCompatibility=JavaVersion.VERSION_17;targetCompatibility=JavaVersion.VERSION_17};kotlinOptions{jvmTarget="17"} }
+android {
+ namespace="com.edunexa.app"; compileSdk=35
+ defaultConfig {
+  applicationId="com.edunexa.app"; minSdk=23; targetSdk=35; versionCode=23; versionName="2.0.3"
+  buildConfigField("boolean", "HOSTED_SERVICES_ENABLED", (providers.gradleProperty("hostedServicesEnabled").orNull == "true").toString())
+ }
+ buildFeatures { viewBinding=true; buildConfig=true }
+ compileOptions { sourceCompatibility=JavaVersion.VERSION_17; targetCompatibility=JavaVersion.VERSION_17 }
+ kotlinOptions { jvmTarget="17" }
+}
 dependencies {
  implementation("com.razorpay:checkout:1.6.40")
  implementation("com.google.mlkit:segmentation-selfie:16.0.0-beta6")

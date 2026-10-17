@@ -206,8 +206,8 @@ service cloud.firestore {
         && request.resource.data.obtained >= 0 && request.resource.data.obtained <= request.resource.data.total
         && request.resource.data.passMarks is int && request.resource.data.passMarks >= 0 && request.resource.data.passMarks <= request.resource.data.total
         && request.resource.data.percentage is number
-        && request.resource.data.percentage >= request.resource.data.obtained * 100 / request.resource.data.total - 0.01
-        && request.resource.data.percentage <= request.resource.data.obtained * 100 / request.resource.data.total + 0.01
+        && request.resource.data.percentage >= request.resource.data.obtained * 100.0 / request.resource.data.total - 0.01
+        && request.resource.data.percentage <= request.resource.data.obtained * 100.0 / request.resource.data.total + 0.01
         && request.resource.data.grade == gradeFor(request.resource.data.percentage)
         && request.resource.data.result == (request.resource.data.obtained >= request.resource.data.passMarks ? 'PASS' : 'FAIL')
         && request.resource.data.published == true && request.resource.data.createdAt is int;

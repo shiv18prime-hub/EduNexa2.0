@@ -117,7 +117,7 @@ class MainActivity : EduActivity() {
         resultCard.setOnClickListener { startActivity(Intent(this, StudentResultsActivity::class.java)) }; attendanceCard.setOnClickListener { startActivity(Intent(this, StudentAttendanceActivity::class.java)) }; root.addView(stats, LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(16)) })
         root.addView(sectionTitle("Your learning")); homeGrid(root, listOf(
             HomeAction("🧮", "Result calculator", "Marks, grade & result") { startActivity(Intent(this, ResultCalculatorActivity::class.java)) },
-            HomeAction("📝", "MCQ tests", "Practice and check scores") { startActivity(Intent(this, StudentMcqActivity::class.java)) },
+            HomeAction("📝", "Practice quizzes", "Learn with explained answers") { startActivity(Intent(this, if(BuildConfig.HOSTED_SERVICES_ENABLED) StudentMcqActivity::class.java else PracticeActivity::class.java)) },
             HomeAction("📊", "School results", "Published academic results") { startActivity(Intent(this, StudentResultsActivity::class.java)) },
             HomeAction("📅", "Attendance", "Review your attendance") { startActivity(Intent(this, StudentAttendanceActivity::class.java)) }
         ))
@@ -126,7 +126,7 @@ class MainActivity : EduActivity() {
             HomeAction("🏫", "Connect school", "Join your school securely") { startActivity(Intent(this, JoinSchoolActivity::class.java)) },
             HomeAction("💬", "Messages", "Connect with your school") { startActivity(Intent(this, ChatActivity::class.java)) },
             HomeAction("🛠", "Smart tools", "Image, PDF and more") { startActivity(Intent(this, ToolsActivity::class.java)) },
-            HomeAction("⭐", "EduNexa Pro", "Membership and offers") { startActivity(Intent(this, MembershipActivity::class.java)) }
+            HomeAction("✦", "Study desk", "Quizzes, reports and tools") { startActivity(Intent(this, StudyDeskActivity::class.java)) }
         ))
         auth.currentUser?.uid?.let { uid -> db.collection("users").document(uid).get().addOnSuccessListener { d ->
             name.text = d.getString("name") ?: auth.currentUser?.displayName ?: "Student"; val className = d.getString("className"); val schoolName = d.getString("schoolName")
@@ -146,7 +146,7 @@ class MainActivity : EduActivity() {
         fun field(hintText: String, value: String, numeric: Boolean = false) = EditText(this).apply { hint = hintText; setText(value); setPadding(dp(12), dp(10), dp(12), dp(10)); if (numeric) inputType = android.text.InputType.TYPE_CLASS_PHONE }.also { form.addView(it, LinearLayout.LayoutParams(-1, dp(58)).apply { setMargins(0, dp(5), 0, dp(5)) }) }
         val name = field("Full name", currentName); val cls = field("Class", currentClass); val phone = field("Phone number", currentPhone, true); val dob = field("Date of birth (DD/MM/YYYY)", currentDob); val gender = field("Gender", currentGender)
         val note = TextView(this).apply { text = "School/verified details are controlled separately and cannot be changed here."; textSize = 12f; setTextColor(Color.parseColor("#747B91")); setPadding(dp(4), dp(10), dp(4), 0) }; form.addView(note)
-        val dialog = AlertDialog.Builder(this).setTitle("Edit Student Profile").setView(form).setNegativeButton("Cancel", null).setPositiveButton("Save", null).create()
+        val dialog = AlertDialog.Builder(this).setTitle("Edit Profile").setView(form).setNegativeButton("Cancel", null).setPositiveButton("Save", null).create()
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val newName = name.text.toString().trim(); val newClass = cls.text.toString().trim(); val newPhone = phone.text.toString().trim(); val newDob = dob.text.toString().trim(); val newGender = gender.text.toString().trim()
@@ -179,7 +179,7 @@ class MainActivity : EduActivity() {
             (d.getString("profilePhotoData")?:d.getString("profilePhotoUrl"))?.let { url -> profileImage?.let { com.edunexa.app.data.ProfilePhotos.load(it,url) } }
             editBtn.isEnabled = true; editBtn.setOnClickListener { editProfile(uid, displayName, if (cls == "—") "" else cls, phone, dob, gender,d.getString("role") ?: "student") }
         }.addOnFailureListener { info.text = "Account details unavailable\nCheck your internet connection." } }
-        action(root, "🏆", "MCQ History", "Completed tests and scores") { startActivity(Intent(this, McqHistoryActivity::class.java)) }; action(root, "🛠", "EduNexa Tools", "Open all student utility tools") { startActivity(Intent(this, ToolsActivity::class.java)) }
+        action(root, "🏆", "Practice & history", "Quizzes, explanations and saved scores") { startActivity(Intent(this, PracticeActivity::class.java)) }; action(root, "🛠", "EduNexa Tools", "Open all student utility tools") { startActivity(Intent(this, ToolsActivity::class.java)) }
         root.addView(Button(this).apply { text = "Logout"; isAllCaps = false; setTextColor(Color.parseColor("#B42318")); setOnClickListener { Session.logout(this@MainActivity) } }, LinearLayout.LayoutParams(-1, dp(54)).apply { setMargins(0, dp(8), 0, 0) })
         content.addView(ScrollView(this).apply { addView(root) })
     }

@@ -15,6 +15,7 @@ class PublishResultActivity : EduActivity() {
     private lateinit var subject: EditText
     private lateinit var obtained: EditText
     private lateinit var total: EditText
+    private lateinit var publishButton: Button
     private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,14 +28,14 @@ class PublishResultActivity : EduActivity() {
         obtained=EditText(this).apply{hint="Obtained marks";inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL}
         total=EditText(this).apply{hint="Total marks";inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL}
         listOf(student,exam,subject,obtained,total).forEach{root.addView(it)}
-        root.addView(Button(this).apply{text="Publish Result";isAllCaps=false;setOnClickListener{publish()}})
+        publishButton=Button(this).apply{text="Publish Result";isAllCaps=false;setOnClickListener{publish()}};root.addView(publishButton)
         root.addView(Button(this).apply{text="Refresh Published Results";isAllCaps=false;setOnClickListener{loadPublished()}})
         status=TextView(this).apply{setPadding(0,dp(10),0,dp(10))};root.addView(status)
         loadStudents(); loadPublished()
     }
 
     private fun loadStudents(){repo.students({rows->student.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,rows.map{StudentItem(it.first,it.second)});if(rows.isEmpty())status.text="No connected students"},{status.text=it})}
-    private fun publish(){val item=student.selectedItem as? StudentItem?:return;val a=obtained.text.toString().toDoubleOrNull()?:-1.0;val b=total.text.toString().toDoubleOrNull()?:0.0;if(exam.text.isBlank()||subject.text.isBlank()||a<0||b<=0||a>b){status.text="Enter valid exam, subject and marks";return};repo.publish(item.id,item.name,exam.text.toString(),subject.text.toString(),a,b){ok,m->status.text=m;if(ok){subject.text.clear();obtained.text.clear();total.text.clear();loadPublished()}}}
+    private fun publish(){val item=student.selectedItem as? StudentItem?:return;val a=obtained.text.toString().toDoubleOrNull()?:-1.0;val b=total.text.toString().toDoubleOrNull()?:0.0;if(exam.text.isBlank()||subject.text.isBlank()||a<0||b<=0||a>b){status.text="Enter valid exam, subject and marks";return};publishButton.isEnabled=false;repo.publish(item.id,item.name,exam.text.toString(),subject.text.toString(),a,b){ok,m->publishButton.isEnabled=true;status.text=m;if(ok){subject.text.clear();obtained.text.clear();total.text.clear();loadPublished()}}}
     private fun loadPublished(){repo.schoolResults({rows->
         while(root.childCount>10)root.removeViewAt(10)
         root.addView(TextView(this).apply{text="Published Results (${rows.size})";textSize=20f;setTypeface(typeface, android.graphics.Typeface.BOLD)})

@@ -23,14 +23,18 @@ class SchoolActivity:EduActivity(){
         super.onCreate(b);setContentView(R.layout.activity_school)
         schoolName=findViewById(R.id.schoolName);schoolStatus=findViewById(R.id.schoolStatus);schoolMeta=findViewById(R.id.schoolMeta)
         studentCount=findViewById(R.id.studentCount);requestCount=findViewById(R.id.requestCount);dashboardHint=findViewById(R.id.dashboardHint)
-        serviceButtons=listOf(findViewById(R.id.studentsBtn),findViewById(R.id.resultsBtn),findViewById(R.id.mcqBtn),findViewById(R.id.attendanceBtn),findViewById(R.id.announcementBtn),findViewById(R.id.qrBtn),findViewById(R.id.toolsBtn))
+        serviceButtons=listOf(findViewById(R.id.studentsBtn),findViewById(R.id.resultsBtn),findViewById(R.id.mcqBtn),findViewById(R.id.attendanceBtn),findViewById(R.id.announcementBtn),findViewById(R.id.qrBtn),findViewById(R.id.toolsBtn),findViewById(R.id.chatBtn))
         serviceButtons.forEach{it.isEnabled=false}
         findViewById<Button>(R.id.studentsBtn).setOnClickListener{open(StudentManagementActivity::class.java)}
         findViewById<Button>(R.id.resultsBtn).setOnClickListener{open(PublishResultActivity::class.java)}
-        findViewById<Button>(R.id.mcqBtn).setOnClickListener{open(PublishMcqActivity::class.java)}
+        findViewById<Button>(R.id.mcqBtn).apply {
+            text=if(BuildConfig.HOSTED_SERVICES_ENABLED)"Publish MCQ Test" else "Practice Quizzes"
+            setOnClickListener{open(if(BuildConfig.HOSTED_SERVICES_ENABLED)PublishMcqActivity::class.java else PracticeActivity::class.java)}
+        }
         findViewById<Button>(R.id.attendanceBtn).setOnClickListener{open(AttendanceActivity::class.java)}
         findViewById<Button>(R.id.announcementBtn).setOnClickListener{open(PublishNoticeActivity::class.java)}
         findViewById<Button>(R.id.qrBtn).setOnClickListener{open(QrCenterActivity::class.java)}
+        findViewById<Button>(R.id.chatBtn).setOnClickListener{open(ChatActivity::class.java)}
         findViewById<Button>(R.id.toolsBtn).setOnClickListener{open(ToolsActivity::class.java)}
         findViewById<Button>(R.id.logoutBtn).setOnClickListener{Session.logout(this@SchoolActivity)}
         verifySchool()
@@ -48,11 +52,8 @@ class SchoolActivity:EduActivity(){
                 schoolName.text=profile.getString("schoolName")?:profile.getString("name")?:"EduNexa School"
                 schoolStatus.text="✓ Admin Verified School"
                 schoolMeta.text=listOf(profile.getString("address").orEmpty(),profile.getString("contactNumber").orEmpty()).filter{it.isNotBlank()}.joinToString(" • ").ifBlank{"EduNexa School Account"}
-                dashboardHint.text="Member approval, school QR and general tools are available on the free setup. Publishing, tests, attendance and messaging need the optional server backend."
-                serviceButtons.forEach{it.isEnabled=false}
-                findViewById<Button>(R.id.studentsBtn).isEnabled=true
-                findViewById<Button>(R.id.qrBtn).isEnabled=true
-                findViewById<Button>(R.id.toolsBtn).isEnabled=true
+                dashboardHint.text="Manage connected students, publish results and notices, and record attendance from your school workspace."
+                serviceButtons.forEach{it.isEnabled=true}
                 loadDashboardCounts(uid)
             }.addOnFailureListener{lockForApproval();Toast.makeText(this,it.message?:"Could not check school approval",Toast.LENGTH_LONG).show()}
         }.addOnFailureListener{lockForApproval();Toast.makeText(this,it.message?:"Could not load school account",Toast.LENGTH_LONG).show()}
