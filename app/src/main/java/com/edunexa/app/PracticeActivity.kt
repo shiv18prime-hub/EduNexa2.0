@@ -8,6 +8,7 @@ import android.widget.ProgressBar
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import androidx.appcompat.app.AlertDialog
+import androidx.activity.OnBackPressedCallback
 import com.edunexa.app.core.PracticeQuiz
 import com.edunexa.app.core.PracticeSet
 import com.google.firebase.auth.FirebaseAuth
@@ -28,6 +29,7 @@ class PracticeActivity : EduActivity() {
 
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) { override fun handleOnBackPressed() { leave() } })
         topic = PracticeQuiz.sets.find { it.id == state?.getString("topic") }
         topic?.let { set ->
             answers = state?.getIntArray("answers")?.takeIf { values -> values.size == set.questions.size && values.indices.all { values[it] == -1 || values[it] in set.questions[it].options.indices } } ?: IntArray(set.questions.size) { -1 }
@@ -133,7 +135,6 @@ class PracticeActivity : EduActivity() {
             .setTitle("Leave this practice?").setMessage("Your unfinished answers will be discarded.")
             .setNegativeButton("Stay", null).setPositiveButton("Leave") { _, _ -> library() }.show()
     }
-    @Suppress("DEPRECATION") override fun onBackPressed() { leave() }
     override fun onSaveInstanceState(out: Bundle) {
         out.putString("topic", topic?.id); out.putIntArray("answers", answers); out.putInt("index", index)
         out.putBoolean("submitted", submitted); out.putString("attempt", attemptId); super.onSaveInstanceState(out)
