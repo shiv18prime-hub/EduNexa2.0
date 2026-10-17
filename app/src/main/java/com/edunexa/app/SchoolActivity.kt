@@ -23,7 +23,7 @@ class SchoolActivity:EduActivity(){
         super.onCreate(b);setContentView(R.layout.activity_school)
         schoolName=findViewById(R.id.schoolName);schoolStatus=findViewById(R.id.schoolStatus);schoolMeta=findViewById(R.id.schoolMeta)
         studentCount=findViewById(R.id.studentCount);requestCount=findViewById(R.id.requestCount);dashboardHint=findViewById(R.id.dashboardHint)
-        serviceButtons=listOf(findViewById(R.id.studentsBtn),findViewById(R.id.resultsBtn),findViewById(R.id.mcqBtn),findViewById(R.id.attendanceBtn),findViewById(R.id.announcementBtn),findViewById(R.id.qrBtn),findViewById(R.id.toolsBtn))
+        serviceButtons=listOf(findViewById(R.id.studentsBtn),findViewById(R.id.resultsBtn),findViewById(R.id.mcqBtn),findViewById(R.id.attendanceBtn),findViewById(R.id.announcementBtn),findViewById(R.id.qrBtn),findViewById(R.id.toolsBtn),findViewById(R.id.chatBtn))
         serviceButtons.forEach{it.isEnabled=false}
         findViewById<Button>(R.id.studentsBtn).setOnClickListener{open(StudentManagementActivity::class.java)}
         findViewById<Button>(R.id.resultsBtn).setOnClickListener{open(PublishResultActivity::class.java)}
@@ -34,6 +34,7 @@ class SchoolActivity:EduActivity(){
         findViewById<Button>(R.id.attendanceBtn).setOnClickListener{open(AttendanceActivity::class.java)}
         findViewById<Button>(R.id.announcementBtn).setOnClickListener{open(PublishNoticeActivity::class.java)}
         findViewById<Button>(R.id.qrBtn).setOnClickListener{open(QrCenterActivity::class.java)}
+        findViewById<Button>(R.id.chatBtn).setOnClickListener{open(ChatActivity::class.java)}
         findViewById<Button>(R.id.toolsBtn).setOnClickListener{open(ToolsActivity::class.java)}
         findViewById<Button>(R.id.logoutBtn).setOnClickListener{Session.logout(this@SchoolActivity)}
         verifySchool()
