@@ -83,13 +83,19 @@ class MarksheetMakerActivity : EduActivity() {
 
     private fun addSubject() {
         val card = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(8), dp(8), dp(8), dp(8)); background = rounded("#FFFFFF", 14) }
-        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val compactPhone = resources.configuration.screenWidthDp <= 400
+        val row = LinearLayout(this).apply { orientation = if (compactPhone) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL }
         val name = EditText(this).apply { hint = "Subject" }
         val max = EditText(this).apply { hint = "Max"; inputType = 2 }
         val got = EditText(this).apply { hint = "Marks"; inputType = 2 }
         val pass = EditText(this).apply { hint = "Pass"; inputType = 2 }
         listOf(name, max, got, pass).forEach { it.addTextChangedListener(watcher()) }
-        row.addView(name, LinearLayout.LayoutParams(0, -2, 2f)); row.addView(max, LinearLayout.LayoutParams(0, -2, 1f)); row.addView(got, LinearLayout.LayoutParams(0, -2, 1f)); row.addView(pass, LinearLayout.LayoutParams(0, -2, 1f)); card.addView(row)
+        if (compactPhone) {
+            listOf(name, max, got, pass).forEach { row.addView(it, LinearLayout.LayoutParams(-1, -2)) }
+        } else {
+            row.addView(name, LinearLayout.LayoutParams(0, -2, 2f)); row.addView(max, LinearLayout.LayoutParams(0, -2, 1f)); row.addView(got, LinearLayout.LayoutParams(0, -2, 1f)); row.addView(pass, LinearLayout.LayoutParams(0, -2, 1f))
+        }
+        card.addView(row)
         val optional = CheckBox(this).apply { text = "Optional subject"; setOnCheckedChangeListener { _, _ -> invalidateFinal(); updatePreview() } }; card.addView(optional)
         card.addView(Button(this).apply { text = "Remove"; isAllCaps = false; setOnClickListener { subjectBox.removeView(card); invalidateFinal(); updatePreview() } })
         card.tag = listOf<View>(name, max, got, pass, optional); subjectBox.addView(card, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
