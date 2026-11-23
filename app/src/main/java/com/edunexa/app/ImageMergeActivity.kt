@@ -103,9 +103,21 @@ class ImageMergeActivity : EduActivity() {
             val uris = mutableListOf<Uri>()
             data?.clipData?.let { clip -> for (i in 0 until clip.itemCount) uris.add(clip.getItemAt(i).uri) }
             data?.data?.let { uris.add(it) }
+            val uniqueUris = uris.distinct().take(12)
             images.forEach { if (!it.isRecycled) it.recycle() }
-            images = uris.take(12).mapNotNull { decodeSampled(it, 1200) }.toMutableList()
-            if (images.size < 2) { status.text = "Select at least 2 valid images"; save.visibility = View.GONE; return }
+            images = uniqueUris.mapNotNull { uri -> runCatching { decodeSampled(uri, 1200) }.getOrNull() }.toMutableList()
+            if (images.size < 2) {
+                images.forEach { if (!it.isRecycled) it.recycle() }
+                images.clear()
+                val previousPreview = (preview.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+                preview.setImageDrawable(null)
+                if (previousPreview != null && !previousPreview.isRecycled) previousPreview.recycle()
+                resultBytes = null
+                unsaved = false
+                status.text = "Select at least 2 valid images"
+                save.visibility = View.GONE
+                return
+            }
             render()
         } else if (requestCode == 302) {
             val uri = data?.data ?: return
