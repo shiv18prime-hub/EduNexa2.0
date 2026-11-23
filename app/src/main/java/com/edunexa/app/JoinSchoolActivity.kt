@@ -17,13 +17,19 @@ class JoinSchoolActivity : EduActivity() {
         super.onCreate(savedInstanceState); setContentView(R.layout.activity_join_school)
         val input = findViewById<EditText>(R.id.schoolCodeInput); val button = findViewById<Button>(R.id.joinSchoolBtn)
         val scan = findViewById<Button>(R.id.scanSchoolQrBtn); val progress = findViewById<ProgressBar>(R.id.joinProgress); val status = findViewById<TextView>(R.id.joinStatus)
+        val cancel = Button(this).apply { text = "Cancel Pending Request"; visibility = View.GONE }
+        (button.parent as? android.view.ViewGroup)?.addView(cancel)
+        FirebaseAuth.getInstance().currentUser?.uid?.let { uid ->
+            FirebaseFirestore.getInstance().collection("users").document(uid).get().addOnSuccessListener { doc ->
+                if (doc.getString("schoolJoinStatus") == "pending") cancel.visibility = View.VISIBLE
+            }
+        }
         fun submit(code: String) {
             if (code.isBlank()) { input.error = "Enter school code"; return }
             button.isEnabled = false; scan.isEnabled = false; progress.visibility = View.VISIBLE; status.text = "Verifying school and preparing request…"
-            repo.joinByCode(code) { ok, message -> progress.visibility = View.GONE; button.isEnabled = true; scan.isEnabled = true; status.text = if (ok) "✓ $message" else message; if (ok) input.isEnabled = false }
+            repo.joinByCode(code) { ok, message -> progress.visibility = View.GONE; button.isEnabled = true; scan.isEnabled = true; status.text = if (ok) "✓ $message" else message; if (ok && message.contains("Request sent", true)) { input.isEnabled = false; cancel.visibility = View.VISIBLE } }
         }
-        val cancel=Button(this).apply{text="Cancel Pending Request";setOnClickListener{isEnabled=false;workflows.cancel{_,message->status.text=message;input.isEnabled=true;isEnabled=true}}}
-        (button.parent as? android.view.ViewGroup)?.addView(cancel)
+        cancel.setOnClickListener { cancel.isEnabled = false; workflows.cancel { ok, message -> status.text = message; if (ok) { input.isEnabled = true; cancel.visibility = View.GONE }; cancel.isEnabled = true } }
         button.setOnClickListener { submit(input.text.toString().trim()) }
         val options = GmsBarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).enableAutoZoom().build()
         val scanner = GmsBarcodeScanning.getClient(this, options)
