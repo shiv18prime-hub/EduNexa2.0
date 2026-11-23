@@ -135,7 +135,19 @@ class MainActivity : EduActivity() {
             com.edunexa.app.data.DashboardRepository().load({stats->
                 resultValue.text=(stats["latestPercentage"] as? Number)?.toDouble()?.let{"%.1f%%".format(it)}?:"—"
                 attendanceValue.text=(stats["attendancePercentage"] as? Number)?.toDouble()?.let{"%.0f%%".format(it)}?:"—"
-                status.text=if(stats["schoolJoinStatus"]=="connected")"● Connected to ${stats["schoolName"]}" else if(stats["schoolJoinStatus"]=="pending")"● School connection pending" else "○ School not connected"
+                val joinStatus = stats["schoolJoinStatus"]?.toString().orEmpty()
+                status.text = when (joinStatus) {
+                    "connected" -> "● School connected"
+                    "pending" -> "● Connection pending • Awaiting approval"
+                    "rejected" -> "⚠ Request rejected • Tap Connect School to retry"
+                    else -> "○ School not connected • Tap Connect School"
+                }
+                status.setTextColor(Color.parseColor(when (joinStatus) {
+                    "connected" -> "#157347"
+                    "pending" -> "#4338CA"
+                    "rejected" -> "#B45309"
+                    else -> "#B45309"
+                }))
             },{resultValue.text="View";attendanceValue.text="View"})
         }.addOnFailureListener { status.text = "Offline • Some dashboard data may be unavailable"; status.setTextColor(Color.parseColor("#B45309")); resultValue.text = "View"; attendanceValue.text = "View" } }
         content.addView(ScrollView(this).apply { addView(root) })
