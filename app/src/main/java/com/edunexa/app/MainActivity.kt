@@ -85,14 +85,20 @@ class MainActivity : EduActivity() {
     }
 
     private fun homeGrid(root: LinearLayout, items: List<HomeAction>) {
-        items.chunked(2).forEach { rowItems ->
+        // Keep a single column on very narrow phones so tile text and tap targets
+        // have enough width; use two columns on regular-width screens.
+        val columns = if (resources.configuration.screenWidthDp < 360) 1 else 2
+        items.chunked(columns).forEach { rowItems ->
             val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             rowItems.forEachIndexed { index, item ->
                 row.addView(homeTile(item), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                    if (index == 0) setMargins(0, 0, dp(6), dp(10)) else setMargins(dp(6), 0, 0, dp(10))
+                    if (index < rowItems.lastIndex) setMargins(0, 0, dp(6), dp(10))
+                    else setMargins(if (columns == 2 && rowItems.size == 1) dp(6) else 0, 0, 0, dp(10))
                 })
             }
-            if (rowItems.size == 1) row.addView(android.view.View(this), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { setMargins(dp(6), 0, 0, dp(10)) })
+            if (columns == 2 && rowItems.size == 1) {
+                row.addView(android.view.View(this), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            }
             root.addView(row, LinearLayout.LayoutParams(-1, -2))
         }
     }
