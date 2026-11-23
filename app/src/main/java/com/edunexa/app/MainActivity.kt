@@ -137,7 +137,7 @@ class MainActivity : EduActivity() {
                 attendanceValue.text=(stats["attendancePercentage"] as? Number)?.toDouble()?.let{"%.0f%%".format(it)}?:"—"
                 val joinStatus = stats["schoolJoinStatus"]?.toString().orEmpty()
                 status.text = when (joinStatus) {
-                    "connected" -> "● School connected"
+                    "connected" -> "● Connected to " + (stats["schoolName"]?.toString()?.takeIf { it.isNotBlank() } ?: "your school")
                     "pending" -> "● Connection pending • Awaiting approval"
                     "rejected" -> "⚠ Request rejected • Tap Connect School to retry"
                     else -> "○ School not connected • Tap Connect School"
