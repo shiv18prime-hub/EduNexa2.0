@@ -3,9 +3,108 @@ package com.edunexa.app
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
 import com.edunexa.app.data.SchoolResultRepository
 import com.google.android.material.card.MaterialCardView
 
-class StudentResultsActivity:EduActivity(){private val repo=SchoolResultRepository();private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
- override fun onCreate(b:Bundle?){super.onCreate(b);val root=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(dp(18),dp(18),dp(18),dp(18))};setContentView(ScrollView(this).apply{addView(root)});root.addView(TextView(this).apply{text="My Performance";textSize=27f;setTypeface(typeface, android.graphics.Typeface.BOLD);setTextColor(Color.parseColor("#20243A"))});val status=TextView(this).apply{text="Loading published results…";setPadding(0,dp(8),0,dp(14))};root.addView(status);repo.myResults({rows->if(rows.isEmpty()){status.text="No published results yet";return@myResults};val ps=rows.map{(it["percentage"] as? Number)?.toDouble()?:0.0};val avg=ps.average();val failed=rows.count{it["result"]=="FAIL"};val summary=MaterialCardView(this).apply{radius=dp(20).toFloat();setCardBackgroundColor(Color.parseColor("#F4F3FF"));setContentPadding(dp(17),dp(16),dp(17),dp(16));addView(TextView(this@StudentResultsActivity).apply{text="Overall Average  ${"%.1f".format(avg)}%\nSubjects needing improvement: $failed\n${if(failed==0)"All published results are in passing range" else "Focus on the subjects marked below"}";textSize=16f;setTypeface(typeface, android.graphics.Typeface.BOLD);setTextColor(Color.parseColor("#4338CA"))})};root.addView(summary,LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(14))});status.text="${rows.size} published result(s) • Subject-wise comparison";rows.forEachIndexed{i,r->val p=(r["percentage"] as? Number)?.toDouble()?:0.0;val subject=r["subject"].toString();val previous=rows.drop(i+1).firstOrNull{it["subject"].toString().equals(subject,true)};val prev=previous?.let{(it["percentage"] as? Number)?.toDouble()};val trend=prev?.let{p-it};val trendText=trend?.let{"\n${if(it>=0)"↑ Improved" else "↓ Dropped"} ${"%.1f".format(kotlin.math.abs(it))}% vs previous $subject result"}?:"\nFirst recorded $subject result";val c=MaterialCardView(this).apply{radius=dp(18).toFloat();cardElevation=dp(2).toFloat();setCardBackgroundColor(Color.WHITE);setContentPadding(dp(16),dp(16),dp(16),dp(16));addView(TextView(this@StudentResultsActivity).apply{text="${r["exam"]} • $subject\n${r["obtained"]} / ${r["total"]}\n${"%.2f".format(p)}% • Grade ${r["grade"]} • ${if(r["result"]=="PASS")"PASS" else "NEEDS IMPROVEMENT"}$trendText";textSize=16f})};root.addView(c,LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,0,0,dp(11))})}},{status.text=it})}}
+class StudentResultsActivity : EduActivity() {
+    private val repo = SchoolResultRepository()
+    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(18), dp(18), dp(18), dp(18))
+        }
+        setContentView(ScrollView(this).apply { addView(root) })
+
+        root.addView(TextView(this).apply {
+            text = "My Performance"
+            textSize = 27f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(Color.parseColor("#20243A"))
+        })
+        val status = TextView(this).apply {
+            text = "Published school results"
+            setPadding(0, dp(8), 0, dp(10))
+        }
+        root.addView(status)
+        val refresh = Button(this).apply {
+            text = "Refresh Results"
+            isAllCaps = false
+        }
+        root.addView(refresh)
+        val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        root.addView(content)
+
+        fun load() {
+            status.text = "Loading published results…"
+            content.removeAllViews()
+            repo.myResults({ rows ->
+                content.removeAllViews()
+                if (rows.isEmpty()) {
+                    status.text = "No published results yet"
+                    content.addView(TextView(this).apply {
+                        text = "Your school-published marks will appear here when available."
+                        textSize = 15f
+                        setPadding(0, dp(14), 0, dp(14))
+                    })
+                    return@myResults
+                }
+                val percentages = rows.map { (it["percentage"] as? Number)?.toDouble() ?: 0.0 }
+                val average = percentages.average()
+                val failed = rows.count { it["result"] == "FAIL" }
+                status.text = "${rows.size} published result(s) • Subject-wise comparison"
+                val summary = MaterialCardView(this).apply {
+                    radius = dp(20).toFloat()
+                    setCardBackgroundColor(Color.parseColor("#F4F3FF"))
+                    setContentPadding(dp(17), dp(16), dp(17), dp(16))
+                    addView(TextView(this@StudentResultsActivity).apply {
+                        text = "Overall Average  ${"%.1f".format(average)}%\nSubjects needing improvement: $failed\n${if (failed == 0) "All published results are in passing range" else "Focus on the subjects marked below"}"
+                        textSize = 16f
+                        setTypeface(typeface, android.graphics.Typeface.BOLD)
+                        setTextColor(Color.parseColor("#4338CA"))
+                    })
+                }
+                content.addView(summary, LinearLayout.LayoutParams(-1, -2).apply {
+                    setMargins(0, 0, 0, dp(14))
+                })
+                rows.forEachIndexed { i, result ->
+                    val percentage = (result["percentage"] as? Number)?.toDouble() ?: 0.0
+                    val subject = result["subject"].toString()
+                    val previous = rows.drop(i + 1).firstOrNull {
+                        it["subject"].toString().equals(subject, true)
+                    }
+                    val prevPercent = previous?.let { (it["percentage"] as? Number)?.toDouble() }
+                    val trend = prevPercent?.let { percentage - it }
+                    val trendText = trend?.let {
+                        "\n${if (it >= 0) "↑ Improved" else "↓ Dropped"} ${"%.1f".format(kotlin.math.abs(it))}% vs previous $subject result"
+                    } ?: "\nFirst recorded $subject result"
+                    val card = MaterialCardView(this).apply {
+                        radius = dp(18).toFloat()
+                        cardElevation = dp(2).toFloat()
+                        setCardBackgroundColor(Color.WHITE)
+                        setContentPadding(dp(16), dp(16), dp(16), dp(16))
+                        addView(TextView(this@StudentResultsActivity).apply {
+                            text = "${result["exam]} • $subject\n${result["obtained"]} / ${result["total"]}\n${"%.2f".format(percentage)}% • Grade ${result["grade"]} • ${if (result["result"] == "PASS") "PASS" else "NEEDS IMPROVEMENT"}$trendText"
+                            textSize = 16f
+                        })
+                    }
+                    content.addView(card, LinearLayout.LayoutParams(-1, -2).apply {
+                        setMargins(0, 0, 0, dp(11))
+                    })
+                }
+            }, { error ->
+                status.text = error
+                content.removeAllViews()
+                content.addView(TextView(this).apply {
+                    text = "Unable to load results. Please check your connection and retry."
+                    textSize = 15f
+                    setPadding(0, dp(12), 0, dp(12))
+                })
+            })
+        }
+        refresh.setOnClickListener { load() }
+        load()
+    }
+}
