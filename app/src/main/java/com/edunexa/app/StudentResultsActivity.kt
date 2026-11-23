@@ -39,8 +39,11 @@ class StudentResultsActivity : EduActivity() {
 
         fun load() {
             status.text = "Loading published results…"
+            refresh.text = "Refresh Results"
+            refresh.isEnabled = false
             content.removeAllViews()
             repo.myResults({ rows ->
+                refresh.isEnabled = true
                 content.removeAllViews()
                 if (rows.isEmpty()) {
                     status.text = "No published results yet"
@@ -95,10 +98,12 @@ class StudentResultsActivity : EduActivity() {
                     })
                 }
             }, { error ->
-                status.text = error
+                refresh.isEnabled = true
+                refresh.text = "Try Again"
+                status.text = "Could not load published results"
                 content.removeAllViews()
                 content.addView(TextView(this).apply {
-                    text = "Unable to load results. Please check your connection and retry."
+                    text = error.ifBlank { "Unable to load results. Please check your connection and retry." }
                     textSize = 15f
                     setPadding(0, dp(12), 0, dp(12))
                 })
