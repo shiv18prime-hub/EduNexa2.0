@@ -40,8 +40,8 @@ class ToolsActivity : EduActivity() {
             }
             row.addView(TextView(this).apply { text = icon; textSize = 24f; gravity = Gravity.CENTER; background = bg("#EEF2FF", 14f); layoutParams = LinearLayout.LayoutParams(dp(52), dp(52)) })
             val textBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(13), 0, dp(8), 0) }
-            textBox.addView(TextView(this).apply { text = title; textSize = 16f; setTextColor(Color.parseColor("#17213D")); setTypeface(typeface, Typeface.BOLD) })
-            textBox.addView(TextView(this).apply { text = detail; textSize = 12f; setTextColor(Color.parseColor("#72798F")); setPadding(0, dp(3), 0, 0) })
+            textBox.addView(TextView(this).apply { text = title; textSize = 16f; maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END; setTextColor(Color.parseColor("#17213D")); setTypeface(typeface, Typeface.BOLD) })
+            textBox.addView(TextView(this).apply { text = detail; textSize = 12f; maxLines = 3; ellipsize = android.text.TextUtils.TruncateAt.END; setLineSpacing(0f, 1.05f); setTextColor(Color.parseColor("#72798F")); setPadding(0, dp(3), 0, 0) })
             row.addView(textBox, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             row.addView(TextView(this).apply { text = "›"; textSize = 28f; setTextColor(Color.parseColor("#3157D5")); gravity = Gravity.CENTER })
             root.addView(row, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = dp(10) })
