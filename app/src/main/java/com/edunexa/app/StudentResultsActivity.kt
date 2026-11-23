@@ -86,7 +86,7 @@ class StudentResultsActivity : EduActivity() {
                         setCardBackgroundColor(Color.WHITE)
                         setContentPadding(dp(16), dp(16), dp(16), dp(16))
                         addView(TextView(this@StudentResultsActivity).apply {
-                            text = "${result["exam]} • $subject\n${result["obtained"]} / ${result["total"]}\n${"%.2f".format(percentage)}% • Grade ${result["grade"]} • ${if (result["result"] == "PASS") "PASS" else "NEEDS IMPROVEMENT"}$trendText"
+                            text = "${result["exam"]} • $subject\n${result["obtained"]} / ${result["total"]}\n${"%.2f".format(percentage)}% • Grade ${result["grade"]} • ${if (result["result"] == "PASS") "PASS" else "NEEDS IMPROVEMENT"}$trendText"
                             textSize = 16f
                         })
                     }
