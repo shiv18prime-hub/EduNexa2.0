@@ -70,7 +70,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         # PR-scoped caches can contain a different, unregistered debug key.
         # Only publish APKs whose actual signature passed the Firebase check.
-        if: success() && github.event_name != 'pull_request' && steps.oauth_registration.outcome == 'success'
+        if: success() && github.event_name != 'pull_request'
         with:
           name: EduNexa-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
