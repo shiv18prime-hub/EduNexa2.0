@@ -8,8 +8,8 @@ import com.edunexa.app.data.SchoolJoinRepository
 import com.edunexa.app.data.SchoolWorkflowRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
-import com.google.mlkit.vision.codescanning.GmsBarcodeScanning
+import com.google.android.gms.mlkit.vision.codescanner.GmsBarcodeScannerOptions
+import com.google.android.gms.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 
 class JoinSchoolActivity : EduActivity() {
