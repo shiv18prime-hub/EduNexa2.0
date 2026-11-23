@@ -48,14 +48,14 @@ class StudentManagementActivity : EduActivity() {
                     "Reject Request" to { reject(r.id, studentId) }
                 ))
             }
-            loadConnected(sid, requests.size())
-        }.addOnFailureListener { status.text = it.message ?: "Could not load requests"; loadConnected(sid, 0) }
+            loadConnected(sid, requests.size(), false)
+        }.addOnFailureListener { loadConnected(sid, 0, true) }
     }
 
-    private fun loadConnected(sid: String, pending: Int) {
+    private fun loadConnected(sid: String, pending: Int, pendingLoadFailed: Boolean) {
         db.collection("memberships").whereEqualTo("schoolId", sid).whereEqualTo("active", true).get().addOnSuccessListener { memberships ->
             val rows=memberships.documents.filter{it.getString("role")=="student"}
-            status.text = "${rows.size} connected • $pending pending"
+            status.text = if (pendingLoadFailed) "${rows.size} connected • Pending requests unavailable" else "${rows.size} connected • $pending pending"
             root.addView(TextView(this).apply { text = "Connected Members (${rows.size})"; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(10), 0, dp(8)) })
             rows.forEach { membership ->
                 val uid=membership.getString("uid")?:return@forEach
