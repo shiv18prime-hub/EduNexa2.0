@@ -24,12 +24,14 @@ class JoinSchoolActivity : EduActivity() {
             text = "Cancel Pending Request"
             visibility = View.GONE
         }
+        val refresh = Button(this).apply { text = "Check Request Status" }
         (button.parent as? ViewGroup)?.addView(cancel)
+        (button.parent as? ViewGroup)?.addView(refresh)
 
         // Temporarily hide QR scanning until the Android scanner integration is verified.
         scan.visibility = View.GONE
 
-        fun setPendingState() {
+        fun showPending() {
             input.isEnabled = false
             button.isEnabled = false
             scan.isEnabled = false
@@ -37,20 +39,38 @@ class JoinSchoolActivity : EduActivity() {
             status.text = "Your request is pending school approval."
         }
 
-        workflows.getJoinStatus { joinStatus, error ->
-            if (error.isNotBlank()) {
-                status.text = error
-            } else when (joinStatus) {
-                "pending" -> setPendingState()
-                "rejected" -> {
-                    button.text = "Send Request Again"
-                    status.text = "Previous request was rejected. You can send a new request."
+        fun checkStatus() {
+            refresh.isEnabled = false
+            status.text = "Checking school connection status…"
+            workflows.getJoinStatus { joinStatus, error ->
+                refresh.isEnabled = true
+                if (error.isNotBlank()) {
+                    status.text = error
+                    return@getJoinStatus
                 }
-                "connected" -> {
-                    input.isEnabled = false
-                    button.isEnabled = false
-                    scan.isEnabled = false
-                    status.text = "You are already connected to a school."
+                when (joinStatus) {
+                    "pending" -> showPending()
+                    "rejected" -> {
+                        input.isEnabled = true
+                        button.isEnabled = true
+                        button.text = "Send Request Again"
+                        cancel.visibility = View.GONE
+                        status.text = "Previous request was rejected. You can send a new request."
+                    }
+                    "connected" -> {
+                        input.isEnabled = false
+                        button.isEnabled = false
+                        scan.isEnabled = false
+                        cancel.visibility = View.GONE
+                        status.text = "You are already connected to a school."
+                    }
+                    else -> {
+                        input.isEnabled = true
+                        button.isEnabled = true
+                        button.text = "Send Connection Request"
+                        cancel.visibility = View.GONE
+                        status.text = "No pending school request found. Enter a school code to connect."
+                    }
                 }
             }
         }
@@ -67,13 +87,14 @@ class JoinSchoolActivity : EduActivity() {
                 progress.visibility = View.GONE
                 status.text = if (ok) "✓ $message" else message
                 if (ok && message.contains("Request sent", true)) {
-                    setPendingState()
+                    showPending()
                 } else if (!ok) {
                     button.isEnabled = true
                 }
             }
         }
 
+        refresh.setOnClickListener { checkStatus() }
         cancel.setOnClickListener {
             cancel.isEnabled = false
             workflows.cancel { ok, message ->
@@ -81,6 +102,7 @@ class JoinSchoolActivity : EduActivity() {
                 if (ok) {
                     input.isEnabled = true
                     button.isEnabled = true
+                    button.text = "Send Connection Request"
                     scan.isEnabled = false
                     cancel.visibility = View.GONE
                 }
@@ -88,5 +110,6 @@ class JoinSchoolActivity : EduActivity() {
             }
         }
         button.setOnClickListener { submit(input.text.toString().trim()) }
+        checkStatus()
     }
 }
