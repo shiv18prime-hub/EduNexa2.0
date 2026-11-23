@@ -76,14 +76,14 @@ class PhotoSignatureToolActivity : EduActivity() {
         contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it,null,bounds) }
         if(bounds.outWidth<=0 || bounds.outHeight<=0) return null
         var sample=1
-        while(bounds.outWidth/sample > maxSide*2 || bounds.outHeight/sample > maxSide*2) sample*=2
+        while(bounds.outWidth/sample > maxSide || bounds.outHeight/sample > maxSide) sample*=2
         return contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it,null,BitmapFactory.Options().apply { inSampleSize=sample; inPreferredConfig=Bitmap.Config.ARGB_8888 }) }
     }
 
     override fun onActivityResult(q:Int,res:Int,data:Intent?) {
         super.onActivityResult(q,res,data); if(res!=Activity.RESULT_OK)return
         if(q==81) {
-            val next=data?.data?.let { decodeSampled(it) }
+            val next=data?.data?.let { decodeSampled(it, 1200) }
             if(next==null) { status.text="Could not open this image"; return }
             source?.let { if(it !== output && !it.isRecycled) it.recycle() }; source=next
             output=null; unsaved=false; if(w.text.isBlank())w.setText("300"); if(h.text.isBlank())h.setText("400"); rotation=0f; render()
