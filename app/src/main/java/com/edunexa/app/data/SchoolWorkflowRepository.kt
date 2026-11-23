@@ -28,6 +28,7 @@ class SchoolWorkflowRepository {
             if(schoolCode.getBoolean("active")!=true||school.getString("role")!="school"||school.getBoolean("schoolApproved")!=true||approval.getBoolean("approved")!=true)throw IllegalStateException("School needs administrator approval")
             if(me.getString("schoolJoinStatus")=="pending")throw IllegalStateException("A school request is already pending")
             if(me.getString("schoolId")==schoolId&&me.getString("schoolJoinStatus")=="connected"&&membership.getBoolean("active")==true&&membership.getString("role")==me.getString("role"))return@runTransaction "Already connected"
+            if(me.getString("schoolJoinStatus")=="connected"&&me.getString("schoolId").orEmpty().isNotBlank()&&me.getString("schoolId")!=schoolId)throw IllegalStateException("You are already connected to another school. Ask your current school to disconnect you before joining a new school")
             val name=me.getString("name").orEmpty();val role=me.getString("role").orEmpty()
             tx.set(requestRef,mapOf("schoolId" to schoolId,"schoolName" to (school.getString("schoolName")?.ifBlank{null}?:school.getString("name").orEmpty()),
                 "studentId" to studentId,"studentName" to name,"studentEmail" to (me.getString("email")?:auth.currentUser?.email.orEmpty()),
