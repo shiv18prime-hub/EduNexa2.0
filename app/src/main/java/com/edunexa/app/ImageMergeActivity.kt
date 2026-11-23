@@ -84,7 +84,11 @@ class ImageMergeActivity : EduActivity() {
             val out = ByteArrayOutputStream()
             merged.compress(Bitmap.CompressFormat.JPEG, 92, out)
             resultBytes = out.toByteArray()
+            val previousPreview = (preview.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
             preview.setImageBitmap(merged)
+            if (previousPreview != null && previousPreview !== merged && images.none { it === previousPreview } && !previousPreview.isRecycled) {
+                previousPreview.recycle()
+            }
             save.visibility = View.VISIBLE
             unsaved = true
             layoutText.text = "Grid: $columns column${if (columns > 1) "s" else ""} • Gap: $gap px"
@@ -100,7 +104,7 @@ class ImageMergeActivity : EduActivity() {
             data?.clipData?.let { clip -> for (i in 0 until clip.itemCount) uris.add(clip.getItemAt(i).uri) }
             data?.data?.let { uris.add(it) }
             images.forEach { if (!it.isRecycled) it.recycle() }
-            images = uris.take(12).mapNotNull { decodeSampled(it, 1800) }.toMutableList()
+            images = uris.take(12).mapNotNull { decodeSampled(it, 1200) }.toMutableList()
             if (images.size < 2) { status.text = "Select at least 2 valid images"; save.visibility = View.GONE; return }
             render()
         } else if (requestCode == 302) {
@@ -116,7 +120,7 @@ class ImageMergeActivity : EduActivity() {
         contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
         var sample = 1
-        while (bounds.outWidth / sample > maxSide * 2 || bounds.outHeight / sample > maxSide * 2) sample *= 2
+        while (bounds.outWidth / sample > maxSide || bounds.outHeight / sample > maxSide) sample *= 2
         val opts = BitmapFactory.Options().apply { inSampleSize = sample; inPreferredConfig = Bitmap.Config.RGB_565 }
         return contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
     }
