@@ -21,7 +21,7 @@ class JoinSchoolActivity : EduActivity() {
         (button.parent as? android.view.ViewGroup)?.addView(cancel)
         FirebaseAuth.getInstance().currentUser?.uid?.let { uid ->
             FirebaseFirestore.getInstance().collection("users").document(uid).get().addOnSuccessListener { doc ->
-                if (doc.getString("schoolJoinStatus") == "pending") cancel.visibility = View.VISIBLE
+                if (doc.getString("schoolJoinStatus") == "pending") { cancel.visibility = View.VISIBLE; status.text = "Your request is pending school approval." }\n                else if (doc.getString("schoolJoinStatus") == "rejected") { button.text = "Send Request Again"; status.text = "Previous request was rejected. You can send a new request." }
             }
         }
         fun submit(code: String) {
