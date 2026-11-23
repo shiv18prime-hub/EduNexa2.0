@@ -83,12 +83,13 @@ class JoinSchoolActivity : EduActivity() {
                 input.error = "Enter school code"
                 return
             }
-            statusGeneration++
+            val generation = ++statusGeneration
             button.isEnabled = false
             refresh.isEnabled = false
             progress.visibility = View.VISIBLE
             status.text = "Verifying school and preparing request…"
             repo.joinByCode(code) { ok, message ->
+                if (generation != statusGeneration) return@joinByCode
                 refresh.isEnabled = true
                 progress.visibility = View.GONE
                 status.text = if (ok) "✓ $message" else message
@@ -102,10 +103,11 @@ class JoinSchoolActivity : EduActivity() {
 
         refresh.setOnClickListener { checkStatus() }
         cancel.setOnClickListener {
-            statusGeneration++
+            val generation = ++statusGeneration
             refresh.isEnabled = false
             cancel.isEnabled = false
             workflows.cancel { ok, message ->
+                if (generation != statusGeneration) return@cancel
                 status.text = message
                 if (ok) {
                     input.isEnabled = true
