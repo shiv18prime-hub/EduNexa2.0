@@ -85,8 +85,14 @@ class PhotoSignatureToolActivity : EduActivity() {
         if(q==81) {
             val next=data?.data?.let { decodeSampled(it, 1200) }
             if(next==null) { status.text="Could not open this image"; return }
-            source?.let { if(it !== output && !it.isRecycled) it.recycle() }; source=next
-            output=null; unsaved=false; if(w.text.isBlank())w.setText("300"); if(h.text.isBlank())h.setText("400"); rotation=0f; render()
+            val oldPreview = (preview.drawable as? android.graphics.drawable.BitmapDrawable)?.bitmap
+            preview.setImageDrawable(null)
+            output?.let { if (it !== source && !it.isRecycled) it.recycle() }
+            source?.let { if (it !== output && !it.isRecycled) it.recycle() }
+            if (oldPreview != null && oldPreview !== source && oldPreview !== output && !oldPreview.isRecycled) oldPreview.recycle()
+            source=next
+            output=null; unsaved=false; save.visibility=View.GONE
+            if(w.text.isBlank())w.setText("300"); if(h.text.isBlank())h.setText("400"); rotation=0f; render()
         } else if(q==82) {
             val uri=data?.data?:return; val bmp=output?:return
             runCatching { contentResolver.openOutputStream(uri)?.use { bmp.compress(Bitmap.CompressFormat.JPEG,92,it) }; unsaved=false; status.text="Saved successfully" }.onFailure { status.text="Save failed: ${it.message}" }
