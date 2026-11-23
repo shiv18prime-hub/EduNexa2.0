@@ -18,6 +18,7 @@ class SchoolActivity:EduActivity(){
     private lateinit var requestCount:TextView
     private lateinit var dashboardHint:TextView
     private lateinit var serviceButtons:List<Button>
+    private var verificationGeneration = 0
 
     override fun onCreate(b:Bundle?){
         super.onCreate(b);setContentView(R.layout.activity_school)
@@ -43,11 +44,13 @@ class SchoolActivity:EduActivity(){
     private fun open(c:Class<*>)=startActivity(Intent(this,c))
     private fun lockForApproval(){serviceButtons.forEach{it.isEnabled=false};findViewById<Button>(R.id.toolsBtn).isEnabled=true;schoolStatus.text="Administrator verification required";dashboardHint.text="Ask the EduNexa administrator to verify this school."}
     private fun verifySchool(){
-        val uid=auth.currentUser?.uid?:return goAuth();schoolStatus.text="Checking school approval…";dashboardHint.text="Verifying secure school access…"
+        val uid=auth.currentUser?.uid?:return goAuth();val generation=++verificationGeneration;schoolStatus.text="Checking school approval…";dashboardHint.text="Verifying secure school access…"
         val profileRef=db.collection("users").document(uid)
         profileRef.get().addOnSuccessListener{profile->
+            if(generation!=verificationGeneration)return@addOnSuccessListener
             if(profile.getString("role")!="school"||profile.getBoolean("schoolApproved")!=true){lockForApproval();Toast.makeText(this,"School services require admin approval",Toast.LENGTH_LONG).show();return@addOnSuccessListener}
             db.collection("schoolApprovals").document(uid).get().addOnSuccessListener{approval->
+                if(generation!=verificationGeneration)return@addOnSuccessListener
                 if(approval.getBoolean("approved")!=true){lockForApproval();return@addOnSuccessListener}
                 schoolName.text=profile.getString("schoolName")?:profile.getString("name")?:"EduNexa School"
                 schoolStatus.text="✓ Admin Verified School"
@@ -58,12 +61,12 @@ class SchoolActivity:EduActivity(){
             }.addOnFailureListener{lockForApproval();Toast.makeText(this,it.message?:"Could not check school approval",Toast.LENGTH_LONG).show()}
         }.addOnFailureListener{lockForApproval();Toast.makeText(this,it.message?:"Could not load school account",Toast.LENGTH_LONG).show()}
     }
-    private fun loadDashboardCounts(uid:String){
+    private fun loadDashboardCounts(uid:String,generation:Int){
         studentCount.text="…";requestCount.text="…"
         db.collection("memberships").whereEqualTo("role","student").whereEqualTo("schoolId",uid).whereEqualTo("active",true).get()
-            .addOnSuccessListener{studentCount.text=it.size().toString()}.addOnFailureListener{studentCount.text="—"}
+            .addOnSuccessListener{if(generation==verificationGeneration)studentCount.text=it.size().toString()}.addOnFailureListener{if(generation==verificationGeneration)studentCount.text="—"}
         db.collection("schoolJoinRequests").whereEqualTo("schoolId",uid).whereEqualTo("status","pending").get()
-            .addOnSuccessListener{requestCount.text=it.size().toString()}.addOnFailureListener{requestCount.text="—"}
+            .addOnSuccessListener{if(generation==verificationGeneration)requestCount.text=it.size().toString()}.addOnFailureListener{if(generation==verificationGeneration)requestCount.text="—"}
     }
     private fun goAuth(){startActivity(Intent(this,AuthActivity::class.java).apply{flags=Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK});finish()}
 }
