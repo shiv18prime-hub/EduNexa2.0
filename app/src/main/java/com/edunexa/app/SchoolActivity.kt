@@ -57,9 +57,9 @@ class SchoolActivity:EduActivity(){
                 schoolMeta.text=listOf(profile.getString("address").orEmpty(),profile.getString("contactNumber").orEmpty()).filter{it.isNotBlank()}.joinToString(" • ").ifBlank{"EduNexa School Account"}
                 dashboardHint.text="Manage connected students, publish results and notices, and record attendance from your school workspace."
                 serviceButtons.forEach{it.isEnabled=true}
-                loadDashboardCounts(uid)
-            }.addOnFailureListener{lockForApproval();Toast.makeText(this,it.message?:"Could not check school approval",Toast.LENGTH_LONG).show()}
-        }.addOnFailureListener{lockForApproval();Toast.makeText(this,it.message?:"Could not load school account",Toast.LENGTH_LONG).show()}
+                loadDashboardCounts(uid,generation)
+            }.addOnFailureListener{if(generation==verificationGeneration){lockForApproval();Toast.makeText(this,it.message?:"Could not check school approval",Toast.LENGTH_LONG).show()}}
+        }.addOnFailureListener{if(generation==verificationGeneration){lockForApproval();Toast.makeText(this,it.message?:"Could not load school account",Toast.LENGTH_LONG).show()}}
     }
     private fun loadDashboardCounts(uid:String,generation:Int){
         studentCount.text="…";requestCount.text="…"
