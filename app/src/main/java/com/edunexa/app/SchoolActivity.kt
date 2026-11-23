@@ -26,6 +26,7 @@ class SchoolActivity:EduActivity(){
         studentCount=findViewById(R.id.studentCount);requestCount=findViewById(R.id.requestCount);dashboardHint=findViewById(R.id.dashboardHint)
         serviceButtons=listOf(findViewById(R.id.studentsBtn),findViewById(R.id.resultsBtn),findViewById(R.id.mcqBtn),findViewById(R.id.attendanceBtn),findViewById(R.id.announcementBtn),findViewById(R.id.qrBtn),findViewById(R.id.toolsBtn),findViewById(R.id.chatBtn))
         serviceButtons.forEach{it.isEnabled=false}
+        findViewById<Button>(R.id.dashboardRefreshBtn).setOnClickListener{verifySchool()}
         findViewById<Button>(R.id.studentsBtn).setOnClickListener{open(StudentManagementActivity::class.java)}
         findViewById<Button>(R.id.resultsBtn).setOnClickListener{open(PublishResultActivity::class.java)}
         findViewById<Button>(R.id.mcqBtn).apply {
