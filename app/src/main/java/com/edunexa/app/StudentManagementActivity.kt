@@ -3,10 +3,8 @@ package com.edunexa.app
 import android.graphics.Color
 import android.os.Bundle
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.card.MaterialCardView
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.edunexa.app.data.SchoolWorkflowRepository
 
@@ -24,6 +22,7 @@ class StudentManagementActivity : EduActivity() {
         setContentView(ScrollView(this).apply { addView(root) })
         root.addView(TextView(this).apply { text = "School Members"; textSize = 27f; setTypeface(typeface, android.graphics.Typeface.BOLD) })
         status = TextView(this).apply { text = "Loading students and requests…"; setPadding(0, dp(8), 0, dp(14)) }; root.addView(status)
+        root.addView(Button(this).apply { text = "Refresh Members"; isAllCaps = false; setOnClickListener { load() } }, LinearLayout.LayoutParams(-1, dp(48)).apply { setMargins(0, 0, 0, dp(12)) })
         load()
     }
 
@@ -38,10 +37,10 @@ class StudentManagementActivity : EduActivity() {
 
     private fun load() {
         val sid = auth.currentUser?.uid ?: return
-        while (root.childCount > 2) root.removeViewAt(2)
+        while (root.childCount > 3) root.removeViewAt(3)
         status.text = "Loading students and requests…"
         db.collection("schoolJoinRequests").whereEqualTo("schoolId", sid).whereEqualTo("status", "pending").get().addOnSuccessListener { requests ->
-            if (!requests.isEmpty) root.addView(TextView(this).apply { text = "Pending Requests (${requests.size()})"; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(5), 0, dp(8)) }, 2)
+            if (!requests.isEmpty) root.addView(TextView(this).apply { text = "Pending Requests (${requests.size()})"; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(5), 0, dp(8)) }, 3)
             requests.documents.forEach { r ->
                 val studentId = r.getString("studentId").orEmpty(); val code = r.getString("schoolCode").orEmpty()
                 card(r.getString("studentName") ?: "Student", "${r.getString("studentEmail") ?: ""}\nClass: ${r.getString("className") ?: "—"}", listOf(
@@ -62,8 +61,8 @@ class StudentManagementActivity : EduActivity() {
                 val uid=membership.getString("uid")?:return@forEach
                 db.collection("users").document(uid).get().addOnSuccessListener{d->
                     if(d.exists()&&d.getString("schoolId")==sid&&d.getString("schoolJoinStatus")=="connected")card(d.getString("name") ?: "Student", "${d.getString("email") ?: ""}\nClass: ${d.getString("className") ?: "Not set"}\nSchool Code: ${d.getString("schoolCode") ?: "—"}",listOf("Disconnect Member" to { androidx.appcompat.app.AlertDialog.Builder(this).setMessage("Disconnect this member from your school?").setNegativeButton("Cancel",null).setPositiveButton("Disconnect"){_,_->workflows.disconnect(uid){_,message->reload(message)}}.show() }))
-                }
             }
+        }
         }.addOnFailureListener { status.text = it.message ?: "Could not load connected students" }
     }
 
