@@ -20,6 +20,7 @@ class SchoolActivity : EduActivity() {
     private lateinit var serviceButtons: List<Button>
     private lateinit var dashboardRefresh: Button
     private var verificationGeneration = 0
+    private var firstResume = true
 
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
@@ -56,6 +57,12 @@ class SchoolActivity : EduActivity() {
 
     override fun onResume() {
         super.onResume()
+        // onCreate already starts the first verification; avoid duplicating it
+        // immediately when Android delivers the initial onResume callback.
+        if (firstResume) {
+            firstResume = false
+            return
+        }
         if (::schoolStatus.isInitialized && auth.currentUser != null) verifySchool()
     }
 
