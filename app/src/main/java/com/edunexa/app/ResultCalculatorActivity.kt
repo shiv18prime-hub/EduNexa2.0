@@ -52,8 +52,10 @@ class ResultCalculatorActivity : EduActivity() {
     private fun addSubject(name:String="",max:Int=100,got:Int=0,pass:Int=33,optional:Boolean=false){
         val card=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(8),dp(10),dp(8),dp(8)) }
         val n=EditText(this).apply { hint="Subject name"; setText(name) };card.addView(n)
-        val row=LinearLayout(this); fun number(h:String,v:Int)=EditText(this).apply { hint=h; inputType=InputType.TYPE_CLASS_NUMBER; setText(v.toString()); row.addView(this,LinearLayout.LayoutParams(0,-2,1f)) }
-        val m=number("Max",max);val g=number("Obtained",got);val p=number("Passing",pass);card.addView(row)
+        val compactPhone = resources.configuration.screenWidthDp <= 400
+        val row=LinearLayout(this).apply { orientation=if(compactPhone) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL }
+        fun number(h:String,v:Int)=EditText(this).apply { hint=h; inputType=InputType.TYPE_CLASS_NUMBER; setText(v.toString()); row.addView(this,if(compactPhone) LinearLayout.LayoutParams(-1,-2) else LinearLayout.LayoutParams(0,-2,1f)) }
+        val m=number("Max Marks",max);val g=number("Obtained",got);val p=number("Passing Marks",pass);card.addView(row)
         val o=CheckBox(this).apply { text="Optional (excluded from total)"; isChecked=optional };card.addView(o)
         card.addView(Button(this).apply { text="Remove Subject"; setOnClickListener { subjectBox.removeView(card) } });card.tag=listOf(n,m,g,p,o);subjectBox.addView(card)
     }
