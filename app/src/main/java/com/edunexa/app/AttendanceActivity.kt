@@ -2,6 +2,7 @@ package com.edunexa.app
 import android.os.Bundle
 import android.widget.*
 import java.text.SimpleDateFormat
+import java.text.ParsePosition
 import java.util.*
 import com.edunexa.app.data.AttendanceRepository
 
@@ -10,7 +11,11 @@ class AttendanceActivity: EduActivity() {
     private fun dp(v:Int) = (v * resources.displayMetrics.density).toInt()
     private fun validDate(value:String):Boolean {
         val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }
-        return try { formatter.parse(value.trim()) != null } catch (_:Exception) { false }
+        val input = value.trim()
+        if (input.length != 10) return false
+        val position = ParsePosition(0)
+        val parsed = formatter.parse(input, position)
+        return parsed != null && position.index == input.length
     }
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
