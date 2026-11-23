@@ -20,6 +20,7 @@ class JoinSchoolActivity : EduActivity() {
         val scan = findViewById<Button>(R.id.scanSchoolQrBtn)
         val progress = findViewById<ProgressBar>(R.id.joinProgress)
         val status = findViewById<TextView>(R.id.joinStatus)
+        var statusGeneration = 0
         val cancel = Button(this).apply {
             text = "Cancel Pending Request"
             visibility = View.GONE
@@ -40,9 +41,11 @@ class JoinSchoolActivity : EduActivity() {
         }
 
         fun checkStatus() {
+            val generation = ++statusGeneration
             refresh.isEnabled = false
             status.text = "Checking school connection status…"
             workflows.getJoinStatus { joinStatus, error ->
+                if (generation != statusGeneration) return@getJoinStatus
                 refresh.isEnabled = true
                 if (error.isNotBlank()) {
                     status.text = error
@@ -80,10 +83,13 @@ class JoinSchoolActivity : EduActivity() {
                 input.error = "Enter school code"
                 return
             }
+            statusGeneration++
             button.isEnabled = false
+            refresh.isEnabled = false
             progress.visibility = View.VISIBLE
             status.text = "Verifying school and preparing request…"
             repo.joinByCode(code) { ok, message ->
+                refresh.isEnabled = true
                 progress.visibility = View.GONE
                 status.text = if (ok) "✓ $message" else message
                 if (ok && message.contains("Request sent", true)) {
@@ -96,6 +102,8 @@ class JoinSchoolActivity : EduActivity() {
 
         refresh.setOnClickListener { checkStatus() }
         cancel.setOnClickListener {
+            statusGeneration++
+            refresh.isEnabled = false
             cancel.isEnabled = false
             workflows.cancel { ok, message ->
                 status.text = message
@@ -107,6 +115,7 @@ class JoinSchoolActivity : EduActivity() {
                     cancel.visibility = View.GONE
                 }
                 cancel.isEnabled = true
+                refresh.isEnabled = true
             }
         }
         button.setOnClickListener { submit(input.text.toString().trim()) }
