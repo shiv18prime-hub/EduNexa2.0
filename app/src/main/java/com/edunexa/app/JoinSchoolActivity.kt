@@ -6,11 +6,6 @@ import android.view.ViewGroup
 import android.widget.*
 import com.edunexa.app.data.SchoolJoinRepository
 import com.edunexa.app.data.SchoolWorkflowRepository
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.android.gms.mlkit.vision.codescanner.GmsBarcodeScannerOptions
-import com.google.android.gms.mlkit.vision.codescanner.GmsBarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
 
 class JoinSchoolActivity : EduActivity() {
     private val repo = SchoolJoinRepository()
@@ -31,23 +26,33 @@ class JoinSchoolActivity : EduActivity() {
         }
         (button.parent as? ViewGroup)?.addView(cancel)
 
-        FirebaseAuth.getInstance().currentUser?.uid?.let { uid ->
-            FirebaseFirestore.getInstance().collection("users").document(uid).get()
-                .addOnSuccessListener { doc ->
-                    when (doc.getString("schoolJoinStatus")) {
-                        "pending" -> {
-                            cancel.visibility = View.VISIBLE
-                            input.isEnabled = false
-                            button.isEnabled = false
-                            scan.isEnabled = false
-                            status.text = "Your request is pending school approval."
-                        }
-                        "rejected" -> {
-                            button.text = "Send Request Again"
-                            status.text = "Previous request was rejected. You can send a new request."
-                        }
-                    }
+        // Temporarily hide QR scanning until the Android scanner integration is verified.
+        scan.visibility = View.GONE
+
+        fun setPendingState() {
+            input.isEnabled = false
+            button.isEnabled = false
+            scan.isEnabled = false
+            cancel.visibility = View.VISIBLE
+            status.text = "Your request is pending school approval."
+        }
+
+        workflows.getJoinStatus { joinStatus, error ->
+            if (error.isNotBlank()) {
+                status.text = error
+            } else when (joinStatus) {
+                "pending" -> setPendingState()
+                "rejected" -> {
+                    button.text = "Send Request Again"
+                    status.text = "Previous request was rejected. You can send a new request."
                 }
+                "connected" -> {
+                    input.isEnabled = false
+                    button.isEnabled = false
+                    scan.isEnabled = false
+                    status.text = "You are already connected to a school."
+                }
+            }
         }
 
         fun submit(code: String) {
@@ -56,19 +61,15 @@ class JoinSchoolActivity : EduActivity() {
                 return
             }
             button.isEnabled = false
-            scan.isEnabled = false
             progress.visibility = View.VISIBLE
             status.text = "Verifying school and preparing request…"
             repo.joinByCode(code) { ok, message ->
                 progress.visibility = View.GONE
-                button.isEnabled = true
-                scan.isEnabled = true
                 status.text = if (ok) "✓ $message" else message
                 if (ok && message.contains("Request sent", true)) {
-                    input.isEnabled = false
-                    cancel.visibility = View.VISIBLE
-                    button.isEnabled = false
-                    scan.isEnabled = false
+                    setPendingState()
+                } else if (!ok) {
+                    button.isEnabled = true
                 }
             }
         }
@@ -80,39 +81,12 @@ class JoinSchoolActivity : EduActivity() {
                 if (ok) {
                     input.isEnabled = true
                     button.isEnabled = true
-                    scan.isEnabled = true
+                    scan.isEnabled = false
                     cancel.visibility = View.GONE
                 }
                 cancel.isEnabled = true
             }
         }
         button.setOnClickListener { submit(input.text.toString().trim()) }
-
-        val options = GmsBarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-            .enableAutoZoom()
-            .build()
-        val scanner = GmsBarcodeScanning.getClient(this, options)
-        scan.setOnClickListener {
-            status.text = "Opening secure QR scanner…"
-            scanner.startScan().addOnSuccessListener { barcode ->
-                val raw = barcode.rawValue.orEmpty().trim()
-                val code = when {
-                    raw.startsWith("EDUNEXA:SCHOOL:", true) -> raw.substringAfterLast(":")
-                    raw.startsWith("EDU-", true) -> raw
-                    else -> ""
-                }
-                if (code.isBlank()) {
-                    status.text = "This is not an EduNexa school QR."
-                } else {
-                    input.setText(code)
-                    submit(code)
-                }
-            }.addOnCanceledListener {
-                status.text = "Scan cancelled"
-            }.addOnFailureListener { error ->
-                status.text = error.message ?: "QR scanner unavailable"
-            }
-        }
     }
 }
