@@ -45,7 +45,20 @@ class StudentAttendanceActivity:EduActivity(){
                     }
                     val lp=LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,0,0,dp(10));list.addView(card,lp)
                 }
-            },{error->summary.text=error})
+            },{error->
+                summary.text="Attendance could not be loaded"
+                list.removeAllViews()
+                list.addView(TextView(this).apply{
+                    text=error.ifBlank{"Please check your internet connection and try again."}
+                    textSize=15f
+                    setPadding(0,dp(12),0,dp(12))
+                })
+                list.addView(Button(this).apply{
+                    text="Try Again"
+                    isAllCaps=false
+                    setOnClickListener{load()}
+                })
+            })
         }
         refresh.setOnClickListener{load()}
         load()
