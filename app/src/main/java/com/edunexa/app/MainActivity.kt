@@ -72,11 +72,11 @@ class MainActivity : EduActivity() {
             setBackgroundColor(Color.parseColor("#F0F1FF")); setTextColor(Color.parseColor("#4338CA"))
         }, LinearLayout.LayoutParams(dp(42), dp(42)))
         box.addView(TextView(this).apply {
-            text = item.title; textSize = 15f; maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END
+            text = item.title; textSize = 15f; maxLines = 2; ellipsize = android.text.TextUtils.TruncateAt.END
             setTypeface(typeface, android.graphics.Typeface.BOLD); setTextColor(Color.parseColor("#17213D")); setPadding(0, dp(11), 0, 0)
         })
         box.addView(TextView(this).apply {
-            text = item.subtitle; textSize = 11f; maxLines = 2; setLineSpacing(0f, 1.05f)
+            text = item.subtitle; textSize = 11f; maxLines = 3; ellipsize = android.text.TextUtils.TruncateAt.END; setLineSpacing(0f, 1.05f)
             setTextColor(Color.parseColor("#747B91")); setPadding(0, dp(4), 0, 0)
         })
         tile.addView(box)
@@ -88,11 +88,11 @@ class MainActivity : EduActivity() {
         items.chunked(2).forEach { rowItems ->
             val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
             rowItems.forEachIndexed { index, item ->
-                row.addView(homeTile(item), LinearLayout.LayoutParams(0, dp(126), 1f).apply {
+                row.addView(homeTile(item), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                     if (index == 0) setMargins(0, 0, dp(6), dp(10)) else setMargins(dp(6), 0, 0, dp(10))
                 })
             }
-            if (rowItems.size == 1) row.addView(android.view.View(this), LinearLayout.LayoutParams(0, dp(126), 1f).apply { setMargins(dp(6), 0, 0, dp(10)) })
+            if (rowItems.size == 1) row.addView(android.view.View(this), LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { setMargins(dp(6), 0, 0, dp(10)) })
             root.addView(row, LinearLayout.LayoutParams(-1, -2))
         }
     }
