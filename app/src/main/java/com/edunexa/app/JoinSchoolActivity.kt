@@ -68,6 +68,7 @@ class JoinSchoolActivity : EduActivity() {
                     input.isEnabled = false
                     cancel.visibility = View.VISIBLE
                     button.isEnabled = false
+                    scan.isEnabled = false
                 }
             }
         }
