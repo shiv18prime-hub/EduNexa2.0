@@ -39,6 +39,7 @@ class JoinSchoolActivity : EduActivity() {
                             cancel.visibility = View.VISIBLE
                             input.isEnabled = false
                             button.isEnabled = false
+                            scan.isEnabled = false
                             status.text = "Your request is pending school approval."
                         }
                         "rejected" -> {
@@ -78,6 +79,7 @@ class JoinSchoolActivity : EduActivity() {
                 if (ok) {
                     input.isEnabled = true
                     button.isEnabled = true
+                    scan.isEnabled = true
                     cancel.visibility = View.GONE
                 }
                 cancel.isEnabled = true
