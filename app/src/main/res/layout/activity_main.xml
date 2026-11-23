@@ -48,7 +48,9 @@
                     android:layout_marginTop="2dp"
                     android:text="Learn • Calculate • Create • Connect"
                     android:textColor="#E8E5FF"
-                    android:textSize="11sp" />
+                    android:textSize="11sp"
+                    android:maxLines="2"
+                    android:ellipsize="end" />
             </LinearLayout>
 
             <TextView
