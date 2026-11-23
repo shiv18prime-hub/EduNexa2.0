@@ -9,6 +9,13 @@ class SchoolWorkflowRepository {
     private val db=FirebaseFirestore.getInstance()
     private fun uid()=auth.currentUser?.uid
 
+    fun getJoinStatus(done:(String,String)->Unit){
+        val userId=uid()?:return done("","Please sign in first")
+        db.collection("users").document(userId).get()
+            .addOnSuccessListener { doc -> done(doc.getString("schoolJoinStatus").orEmpty(), "") }
+            .addOnFailureListener { error -> done("",error.message?: "Could not load school status") }
+    }
+
     fun join(codeInput:String,done:(Boolean,String)->Unit){
         val studentId=uid()?:return done(false,"Please sign in first")
         val code=codeInput.trim().uppercase().take(50)
