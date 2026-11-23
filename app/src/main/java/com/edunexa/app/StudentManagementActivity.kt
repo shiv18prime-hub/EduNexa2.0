@@ -14,6 +14,7 @@ class StudentManagementActivity : EduActivity() {
     private val workflows = SchoolWorkflowRepository()
     private lateinit var root: LinearLayout
     private lateinit var status: TextView
+    private var loadGeneration = 0
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
     override fun onCreate(b: Bundle?) {
@@ -37,9 +38,11 @@ class StudentManagementActivity : EduActivity() {
 
     private fun load() {
         val sid = auth.currentUser?.uid ?: return
+        val generation = ++loadGeneration
         while (root.childCount > 3) root.removeViewAt(3)
         status.text = "Loading students and requests…"
         db.collection("schoolJoinRequests").whereEqualTo("schoolId", sid).whereEqualTo("status", "pending").get().addOnSuccessListener { requests ->
+            if (generation != loadGeneration) return@addOnSuccessListener
             if (!requests.isEmpty) root.addView(TextView(this).apply { text = "Pending Requests (${requests.size()})"; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(5), 0, dp(8)) }, 3)
             requests.documents.forEach { r ->
                 val studentId = r.getString("studentId").orEmpty(); val code = r.getString("schoolCode").orEmpty()
@@ -48,22 +51,24 @@ class StudentManagementActivity : EduActivity() {
                     "Reject Request" to { reject(r.id, studentId) }
                 ))
             }
-            loadConnected(sid, requests.size(), false)
-        }.addOnFailureListener { loadConnected(sid, 0, true) }
+            loadConnected(sid, requests.size(), false, generation)
+        }.addOnFailureListener { if (generation == loadGeneration) loadConnected(sid, 0, true, generation) }
     }
 
-    private fun loadConnected(sid: String, pending: Int, pendingLoadFailed: Boolean) {
+    private fun loadConnected(sid: String, pending: Int, pendingLoadFailed: Boolean, generation: Int) {
         db.collection("memberships").whereEqualTo("schoolId", sid).whereEqualTo("active", true).get().addOnSuccessListener { memberships ->
+            if (generation != loadGeneration) return@addOnSuccessListener
             val rows=memberships.documents.filter{it.getString("role")=="student"}
             status.text = if (pendingLoadFailed) "${rows.size} connected • Pending requests unavailable" else "${rows.size} connected • $pending pending"
             root.addView(TextView(this).apply { text = "Connected Members (${rows.size})"; textSize = 19f; setTypeface(typeface, android.graphics.Typeface.BOLD); setPadding(0, dp(10), 0, dp(8)) })
             rows.forEach { membership ->
                 val uid=membership.getString("uid")?:return@forEach
                 db.collection("users").document(uid).get().addOnSuccessListener{d->
+                    if (generation != loadGeneration) return@addOnSuccessListener
                     if(d.exists()&&d.getString("schoolId")==sid&&d.getString("schoolJoinStatus")=="connected")card(d.getString("name") ?: "Student", "${d.getString("email") ?: ""}\nClass: ${d.getString("className") ?: "Not set"}\nSchool Code: ${d.getString("schoolCode") ?: "—"}",listOf("Disconnect Member" to { androidx.appcompat.app.AlertDialog.Builder(this).setMessage("Disconnect this member from your school?").setNegativeButton("Cancel",null).setPositiveButton("Disconnect"){_,_->workflows.disconnect(uid){_,message->reload(message)}}.show() }))
             }
         }
-        }.addOnFailureListener { status.text = it.message ?: "Could not load connected students" }
+        }.addOnFailureListener { if (generation == loadGeneration) status.text = it.message ?: "Could not load connected students" }
     }
 
     private fun approve(requestId:String,studentId:String,code:String,schoolId:String){review(studentId,true)}
